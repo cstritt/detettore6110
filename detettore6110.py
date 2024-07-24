@@ -15,6 +15,7 @@ based on split reads
 import argparse
 import os 
 import shutil
+import sys
 
 from scripts import strumenti
 
@@ -30,6 +31,8 @@ def get_args():
 
     parser_input = parser.add_argument_group('INPUT / OUTPUT')
     parser_settings = parser.add_argument_group('PROGRAM SETTINGS')
+    
+    path_to_detettore = os.path.dirname(__file__)
 
     # INPUT/OUTPUT
     parser_input.add_argument(
@@ -45,26 +48,26 @@ def get_args():
 
     parser_input.add_argument(
         "-r", dest="REF",
-        default='resources/reference/MTBC0_v1.1.fasta',
+        default=os.path.join(path_to_detettore, 'resources/reference/MTBC0_v1.1.fasta'),
         help='Reference genome in fasta format. [resources/reference/MTBC0_v1.1.fasta]')
 
     parser_input.add_argument(
         '-t', dest="TARGETS",
-        default='resources/is_targets/IS6110.fasta',
+        default=os.path.join(path_to_detettore,'resources/is_targets/IS6110.fasta'),
         help='IS consensus sequences in fasta format. [resources/is_targets/IS6110.fasta]')
 
     parser_input.add_argument(
         '-a', dest="ANNOT",
-        default='resources/is_annotation/MTBC0.ISEScan.gff',
+        default=os.path.join(path_to_detettore,'resources/is_annotation/MTBC0.ISEScan.gff'),
         help='IS annotation in gff format. [resources/is_annotation/MTBC0.ISEScan.gff]')
     
     parser_input.add_argument(
         '-g', dest="GENES",
         help='Reference gene annotation in gff format. [resources/reference/MTBC0v1.1_PGAP_annot.gff]',
-        default='resources/reference/MTBC0v1.1_PGAP_annot.gff')
+        default=os.path.join(path_to_detettore,'resources/reference/MTBC0v1.1_PGAP_annot.gff'))
     
     parser_input.add_argument(
-        '--to-file',
+        '--to-file', dest='to_file',
         action=('store_true'),
         help='Write to file rather than stdout')
     
@@ -145,7 +148,7 @@ def main():
 
         
     #%% Write output & clean up
-    strumenti.write_output(params, clusters, params.tmp, to_file=False) 
+    strumenti.write_output(params, clusters, params.tmp, to_file=args.to_file) 
     
     if not args.keep:
         shutil.rmtree(params.tmp)
