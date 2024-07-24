@@ -24,7 +24,8 @@ from scripts import strumenti
 def get_args():
 
     parser = argparse.ArgumentParser(
-        description='Detect IS6110 polymorphisms from short-read data')
+        description='Detect IS6110 polymorphisms from short-read data. \
+            Default values in square brackets.')
 
 
     parser_input = parser.add_argument_group('INPUT / OUTPUT')
@@ -45,21 +46,21 @@ def get_args():
     parser_input.add_argument(
         "-r", dest="REF",
         default='resources/reference/MTBC0_v1.1.fasta',
-        help='Reference genome in fasta format.')
+        help='Reference genome in fasta format. [resources/reference/MTBC0_v1.1.fasta]')
 
     parser_input.add_argument(
         '-t', dest="TARGETS",
         default='resources/is_targets/IS6110.fasta',
-        help='IS consensus sequences in fasta format.')
+        help='IS consensus sequences in fasta format. [resources/is_targets/IS6110.fasta]')
 
     parser_input.add_argument(
         '-a', dest="ANNOT",
-        default='resources/is_annotation/Anc01.fasta.MTBC0_renamed.gff',
-        help='IS annotation in gff format.')
+        default='resources/is_annotation/MTBC0.ISEScan.gff',
+        help='IS annotation in gff format. [resources/is_annotation/MTBC0.ISEScan.gff]')
     
     parser_input.add_argument(
         '-g', dest="GENES",
-        help='Reference gene annotation in gff format.',
+        help='Reference gene annotation in gff format. [resources/reference/MTBC0v1.1_PGAP_annot.gff]',
         default='resources/reference/MTBC0v1.1_PGAP_annot.gff')
     
     parser_input.add_argument(
@@ -111,7 +112,7 @@ def main():
     strumenti.mapreads(params.FASTQ, params.TARGETS, 'reads_vs_IS', 4, 'paf', params.tmp, k=9, m=5)
 
     # Extract partially mapping reads    
-    partially_mapping = strumenti.get_partially_mapping(f'{params.tmp}/reads_vs_IS.paf', params.FASTQ, args)
+    partially_mapping = strumenti.get_partially_mapping('{}/reads_vs_IS.paf'.format(params.tmp), params.FASTQ, args)
     
     # Write to fastq
     anchors = strumenti.subset_fastq(partially_mapping, params.FASTQ, params)
@@ -119,19 +120,19 @@ def main():
 
     #%% Estimate copy number from clustered anchor reads
     clusters = strumenti.cluster_anchors(
-        [f'{params.tmp}/anchors.5.fasta', f'{params.tmp}/anchors.3.fasta'], anchors, params)
+        ['{}/anchors.5.fasta'.format(params.tmp), '{}/anchors.3.fasta'.format(params.tmp)], anchors, params)
     
     
     #%% Find insertion sites in the reference genome
 
     # Map partial hits against reference
-    strumenti.mapreads([f'{params.tmp}/partially_mapping.fastq.gz'], params.REF, f'{params.tmp}/{params.OUTPREF}', params.CPUS, 'sam', params.tmp)
+    strumenti.mapreads(['{}/partially_mapping.fastq.gz'.format(params.tmp)], params.REF, '{}/{}'.format(params.tmp,params.OUTPREF), params.CPUS, 'sam', params.tmp)
 
     # Get split reads from reference alignment
-    splitreads = strumenti.getsplitreads(f'{params.tmp}/{params.OUTPREF}.bam', params.tmp, params.MIN_LEN, params.MAPQ)
+    splitreads = strumenti.getsplitreads('{}/{}.bam'.format(params.tmp,params.OUTPREF), params.tmp, params.MIN_LEN, params.MAPQ)
 
     # Map split parts against IS consensus sequences
-    hits = strumenti.ISmap(f'{params.tmp}/softclipped.fasta', params.TARGETS, f'{params.tmp}/{params.OUTPREF}', min_aln_len = 10, k = 9, w = 5)
+    hits = strumenti.ISmap('{}/softclipped.fasta'.format(params.tmp), params.TARGETS, '{}/{}'.format(params.tmp,params.OUTPREF), min_aln_len = 10, k = 9, w = 5)
 
 
     #%% Detect clusters of split reads
