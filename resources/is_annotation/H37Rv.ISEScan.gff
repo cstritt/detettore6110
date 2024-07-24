@@ -1,0 +1,144 @@
+##gff-version 3
+H37Rv	ISEScan	insertion_sequence	1	1889	.	+	.	ID=H37Rv_IS_1;family=IS21;cluster=IS21_259
+H37Rv	ISEScan	terminal_inverted_repeat	1	14	.	+	.	ID=H37Rv_IS_1_TIR;parent=H37Rv_IS_1
+H37Rv	ISEScan	terminal_inverted_repeat	1876	1889	.	+	.	ID=H37Rv_IS_1_TIR;parent=H37Rv_IS_1
+H37Rv	ISEScan	insertion_sequence	702016	703199	.	+	.	ID=H37Rv_IS_2;family=IS200/IS605;cluster=IS200/IS605_138
+H37Rv	ISEScan	insertion_sequence	832352	832857	.	+	.	ID=H37Rv_IS_3;family=ISL3;cluster=ISL3_143|ISL3||protein:plasmid:23974
+H37Rv	ISEScan	terminal_inverted_repeat	832352	832381	.	+	.	ID=H37Rv_IS_3_TIR;parent=H37Rv_IS_3
+H37Rv	ISEScan	terminal_inverted_repeat	832828	832857	.	+	.	ID=H37Rv_IS_3_TIR;parent=H37Rv_IS_3
+H37Rv	ISEScan	insertion_sequence	889021	890375	.		.	ID=H37Rv_IS_4;family=IS3;cluster=IS3_168
+H37Rv	ISEScan	insertion_sequence	1025437	1026914	.	-	.	ID=H37Rv_IS_5;family=IS256;cluster=IS256_47
+H37Rv	ISEScan	terminal_inverted_repeat	1025437	1025472	.	-	.	ID=H37Rv_IS_5_TIR;parent=H37Rv_IS_5
+H37Rv	ISEScan	terminal_inverted_repeat	1026879	1026914	.	-	.	ID=H37Rv_IS_5_TIR;parent=H37Rv_IS_5
+H37Rv	ISEScan	insertion_sequence	1027104	1029092	.	+	.	ID=H37Rv_IS_6;family=IS200/IS605;cluster=IS200/IS605_96
+H37Rv	ISEScan	insertion_sequence	1159035	1160118	.	-	.	ID=H37Rv_IS_7;family=ISNCY;cluster=ISNCY_85
+H37Rv	ISEScan	terminal_inverted_repeat	1159035	1159049	.	-	.	ID=H37Rv_IS_7_TIR;parent=H37Rv_IS_7
+H37Rv	ISEScan	terminal_inverted_repeat	1160104	1160118	.	-	.	ID=H37Rv_IS_7_TIR;parent=H37Rv_IS_7
+H37Rv	ISEScan	insertion_sequence	1164166	1165519	.		.	ID=H37Rv_IS_8;family=IS5;cluster=IS5_279
+H37Rv	ISEScan	terminal_inverted_repeat	1164166	1164173	.		.	ID=H37Rv_IS_8_TIR;parent=H37Rv_IS_8
+H37Rv	ISEScan	terminal_inverted_repeat	1165512	1165519	.		.	ID=H37Rv_IS_8_TIR;parent=H37Rv_IS_8
+H37Rv	ISEScan	insertion_sequence	1169302	1170704	.	+	.	ID=H37Rv_IS_9;family=IS256;cluster=IS256_128
+H37Rv	ISEScan	terminal_inverted_repeat	1169302	1169311	.	+	.	ID=H37Rv_IS_9_TIR;parent=H37Rv_IS_9
+H37Rv	ISEScan	terminal_inverted_repeat	1170695	1170704	.	+	.	ID=H37Rv_IS_9_TIR;parent=H37Rv_IS_9
+H37Rv	ISEScan	insertion_sequence	1275247	1276075	.	+	.	ID=H37Rv_IS_10;family=IS701;cluster=IS701_304|IS701||protein:plasmid:141844
+H37Rv	ISEScan	terminal_inverted_repeat	1275247	1275258	.	+	.	ID=H37Rv_IS_10_TIR;parent=H37Rv_IS_10
+H37Rv	ISEScan	terminal_inverted_repeat	1276064	1276075	.	+	.	ID=H37Rv_IS_10_TIR;parent=H37Rv_IS_10
+H37Rv	ISEScan	insertion_sequence	1277515	1278775	.	+	.	ID=H37Rv_IS_11;family=IS5;cluster=IS5_279
+H37Rv	ISEScan	terminal_inverted_repeat	1277515	1277558	.	+	.	ID=H37Rv_IS_11_TIR;parent=H37Rv_IS_11
+H37Rv	ISEScan	terminal_inverted_repeat	1278732	1278775	.	+	.	ID=H37Rv_IS_11_TIR;parent=H37Rv_IS_11
+H37Rv	ISEScan	insertion_sequence	1341324	1342726	.	-	.	ID=H37Rv_IS_12;family=IS256;cluster=IS256_128
+H37Rv	ISEScan	terminal_inverted_repeat	1341324	1341333	.	-	.	ID=H37Rv_IS_12_TIR;parent=H37Rv_IS_12
+H37Rv	ISEScan	terminal_inverted_repeat	1342717	1342726	.	-	.	ID=H37Rv_IS_12_TIR;parent=H37Rv_IS_12
+H37Rv	ISEScan	insertion_sequence	1468176	1469581	.	-	.	ID=H37Rv_IS_13;family=ISL3;cluster=ISL3_143|ISL3||protein:plasmid:23974
+H37Rv	ISEScan	terminal_inverted_repeat	1468176	1468183	.	-	.	ID=H37Rv_IS_13_TIR;parent=H37Rv_IS_13
+H37Rv	ISEScan	terminal_inverted_repeat	1469574	1469581	.	-	.	ID=H37Rv_IS_13_TIR;parent=H37Rv_IS_13
+H37Rv	ISEScan	insertion_sequence	1541952	1543306	.	-	.	ID=H37Rv_IS_14;family=IS3;cluster=IS3_168
+H37Rv	ISEScan	insertion_sequence	1987703	1989057	.		.	ID=H37Rv_IS_15;family=IS3;cluster=IS3_168
+H37Rv	ISEScan	insertion_sequence	1996101	1997455	.	+	.	ID=H37Rv_IS_16;family=IS3;cluster=IS3_168
+H37Rv	ISEScan	insertion_sequence	1998229	1999585	.	-	.	ID=H37Rv_IS_17;family=IS3;cluster=IS3_168
+H37Rv	ISEScan	terminal_inverted_repeat	1998229	1998256	.	-	.	ID=H37Rv_IS_17_TIR;parent=H37Rv_IS_17
+H37Rv	ISEScan	terminal_inverted_repeat	1999558	1999585	.	-	.	ID=H37Rv_IS_17_TIR;parent=H37Rv_IS_17
+H37Rv	ISEScan	insertion_sequence	2260452	2261791	.	+	.	ID=H37Rv_IS_18;family=IS110;cluster=IS110_153
+H37Rv	ISEScan	terminal_inverted_repeat	2260452	2260464	.	+	.	ID=H37Rv_IS_18_TIR;parent=H37Rv_IS_18
+H37Rv	ISEScan	terminal_inverted_repeat	2261779	2261791	.	+	.	ID=H37Rv_IS_18_TIR;parent=H37Rv_IS_18
+H37Rv	ISEScan	insertion_sequence	2342899	2345928	.	+	.	ID=H37Rv_IS_19;family=IS3;cluster=IS3_168
+H37Rv	ISEScan	terminal_inverted_repeat	2342899	2342918	.	+	.	ID=H37Rv_IS_19_TIR;parent=H37Rv_IS_19
+H37Rv	ISEScan	terminal_inverted_repeat	2345909	2345928	.	+	.	ID=H37Rv_IS_19_TIR;parent=H37Rv_IS_19
+H37Rv	ISEScan	insertion_sequence	2365414	2366768	.		.	ID=H37Rv_IS_20;family=IS3;cluster=IS3_168
+H37Rv	ISEScan	insertion_sequence	2430117	2431471	.	-	.	ID=H37Rv_IS_21;family=IS3;cluster=IS3_168
+H37Rv	ISEScan	insertion_sequence	2439185	2440075	.	-	.	ID=H37Rv_IS_22;family=IS110;cluster=IS110_284
+H37Rv	ISEScan	terminal_inverted_repeat	2439185	2439193	.	-	.	ID=H37Rv_IS_22_TIR;parent=H37Rv_IS_22
+H37Rv	ISEScan	terminal_inverted_repeat	2440067	2440075	.	-	.	ID=H37Rv_IS_22_TIR;parent=H37Rv_IS_22
+H37Rv	ISEScan	insertion_sequence	2550014	2551368	.	+	.	ID=H37Rv_IS_23;family=IS3;cluster=IS3_168
+H37Rv	ISEScan	insertion_sequence	2635577	2636931	.	+	.	ID=H37Rv_IS_24;family=IS3;cluster=IS3_168
+H37Rv	ISEScan	insertion_sequence	2720860	2721649	.	-	.	ID=H37Rv_IS_25;family=IS110;cluster=IS110_284
+H37Rv	ISEScan	terminal_inverted_repeat	2720860	2720878	.	-	.	ID=H37Rv_IS_25_TIR;parent=H37Rv_IS_25
+H37Rv	ISEScan	terminal_inverted_repeat	2721631	2721649	.	-	.	ID=H37Rv_IS_25_TIR;parent=H37Rv_IS_25
+H37Rv	ISEScan	insertion_sequence	2784615	2785969	.	-	.	ID=H37Rv_IS_26;family=IS3;cluster=IS3_168
+H37Rv	ISEScan	insertion_sequence	2828522	2829924	.	-	.	ID=H37Rv_IS_27;family=IS256;cluster=IS256_128
+H37Rv	ISEScan	terminal_inverted_repeat	2828522	2828531	.	-	.	ID=H37Rv_IS_27_TIR;parent=H37Rv_IS_27
+H37Rv	ISEScan	terminal_inverted_repeat	2829915	2829924	.	-	.	ID=H37Rv_IS_27_TIR;parent=H37Rv_IS_27
+H37Rv	ISEScan	insertion_sequence	2972108	2973463	.		.	ID=H37Rv_IS_28;family=IS3;cluster=IS3_168
+H37Rv	ISEScan	insertion_sequence	2982973	2983800	.	+	.	ID=H37Rv_IS_29;family=IS256;cluster=IS256_128
+H37Rv	ISEScan	terminal_inverted_repeat	2982973	2983002	.	+	.	ID=H37Rv_IS_29_TIR;parent=H37Rv_IS_29
+H37Rv	ISEScan	terminal_inverted_repeat	2983771	2983800	.	+	.	ID=H37Rv_IS_29_TIR;parent=H37Rv_IS_29
+H37Rv	ISEScan	insertion_sequence	3100195	3102162	.	-	.	ID=H37Rv_IS_30;family=IS200/IS605;cluster=IS200/IS605_96
+H37Rv	ISEScan	insertion_sequence	3112969	3114722	.	+	.	ID=H37Rv_IS_31;family=ISNCY;cluster=ISNCY_54
+H37Rv	ISEScan	terminal_inverted_repeat	3112969	3112987	.	+	.	ID=H37Rv_IS_31_TIR;parent=H37Rv_IS_31
+H37Rv	ISEScan	terminal_inverted_repeat	3114704	3114722	.	+	.	ID=H37Rv_IS_31_TIR;parent=H37Rv_IS_31
+H37Rv	ISEScan	insertion_sequence	3115654	3116189	.	-	.	ID=H37Rv_IS_32;family=ISL3;cluster=ISL3_119|ISL3||protein:plasmid:158024
+H37Rv	ISEScan	terminal_inverted_repeat	3115654	3115672	.	-	.	ID=H37Rv_IS_32_TIR;parent=H37Rv_IS_32
+H37Rv	ISEScan	terminal_inverted_repeat	3116171	3116189	.	-	.	ID=H37Rv_IS_32_TIR;parent=H37Rv_IS_32
+H37Rv	ISEScan	insertion_sequence	3116810	3119405	.	+	.	ID=H37Rv_IS_33;family=IS481;cluster=IS481_77|IS481||protein:plasmid:142246
+H37Rv	ISEScan	terminal_inverted_repeat	3116810	3116839	.	+	.	ID=H37Rv_IS_33_TIR;parent=H37Rv_IS_33
+H37Rv	ISEScan	terminal_inverted_repeat	3119373	3119405	.	+	.	ID=H37Rv_IS_33_TIR;parent=H37Rv_IS_33
+H37Rv	ISEScan	insertion_sequence	3120524	3121878	.	-	.	ID=H37Rv_IS_34;family=IS3;cluster=IS3_168
+H37Rv	ISEScan	insertion_sequence	3194166	3196132	.	-	.	ID=H37Rv_IS_35;family=IS200/IS605;cluster=IS200/IS605_96
+H37Rv	ISEScan	insertion_sequence	3288366	3290578	.	+	.	ID=H37Rv_IS_36;family=IS21;cluster=IS21_146
+H37Rv	ISEScan	terminal_inverted_repeat	3288366	3288426	.	+	.	ID=H37Rv_IS_36_TIR;parent=H37Rv_IS_36
+H37Rv	ISEScan	terminal_inverted_repeat	3290518	3290578	.	+	.	ID=H37Rv_IS_36_TIR;parent=H37Rv_IS_36
+H37Rv	ISEScan	insertion_sequence	3313205	3313632	.	+	.	ID=H37Rv_IS_37;family=ISNCY;cluster=ISNCY_85
+H37Rv	ISEScan	terminal_inverted_repeat	3313205	3313231	.	+	.	ID=H37Rv_IS_37_TIR;parent=H37Rv_IS_37
+H37Rv	ISEScan	terminal_inverted_repeat	3313606	3313632	.	+	.	ID=H37Rv_IS_37_TIR;parent=H37Rv_IS_37
+H37Rv	ISEScan	insertion_sequence	3332071	3335748	.	-	.	ID=H37Rv_IS_38;family=IS200/IS605;cluster=IS200/IS605_96
+H37Rv	ISEScan	insertion_sequence	3381341	3382743	.	-	.	ID=H37Rv_IS_39;family=IS256;cluster=IS256_128
+H37Rv	ISEScan	terminal_inverted_repeat	3381341	3381350	.	-	.	ID=H37Rv_IS_39_TIR;parent=H37Rv_IS_39
+H37Rv	ISEScan	terminal_inverted_repeat	3382734	3382743	.	-	.	ID=H37Rv_IS_39_TIR;parent=H37Rv_IS_39
+H37Rv	ISEScan	insertion_sequence	3481330	3482732	.	+	.	ID=H37Rv_IS_40;family=IS256;cluster=IS256_128
+H37Rv	ISEScan	terminal_inverted_repeat	3481330	3481339	.	+	.	ID=H37Rv_IS_40_TIR;parent=H37Rv_IS_40
+H37Rv	ISEScan	terminal_inverted_repeat	3482723	3482732	.	+	.	ID=H37Rv_IS_40_TIR;parent=H37Rv_IS_40
+H37Rv	ISEScan	insertion_sequence	3493133	3494486	.	-	.	ID=H37Rv_IS_41;family=ISNCY;cluster=ISNCY_54
+H37Rv	ISEScan	terminal_inverted_repeat	3493133	3493161	.	-	.	ID=H37Rv_IS_41_TIR;parent=H37Rv_IS_41
+H37Rv	ISEScan	terminal_inverted_repeat	3494458	3494486	.	-	.	ID=H37Rv_IS_41_TIR;parent=H37Rv_IS_41
+H37Rv	ISEScan	insertion_sequence	3548545	3550188	.	-	.	ID=H37Rv_IS_42;family=IS21;cluster=IS21_62
+H37Rv	ISEScan	terminal_inverted_repeat	3548545	3548562	.	-	.	ID=H37Rv_IS_42_TIR;parent=H37Rv_IS_42
+H37Rv	ISEScan	terminal_inverted_repeat	3550171	3550188	.	-	.	ID=H37Rv_IS_42_TIR;parent=H37Rv_IS_42
+H37Rv	ISEScan	insertion_sequence	3551230	3552584	.		.	ID=H37Rv_IS_43;family=IS3;cluster=IS3_168
+H37Rv	ISEScan	insertion_sequence	3552713	3554067	.	+	.	ID=H37Rv_IS_44;family=IS3;cluster=IS3_168
+H37Rv	ISEScan	insertion_sequence	3557262	3558651	.	-	.	ID=H37Rv_IS_45;family=IS30;cluster=IS30_173
+H37Rv	ISEScan	terminal_inverted_repeat	3557262	3557324	.	-	.	ID=H37Rv_IS_45_TIR;parent=H37Rv_IS_45
+H37Rv	ISEScan	terminal_inverted_repeat	3558589	3558651	.	-	.	ID=H37Rv_IS_45_TIR;parent=H37Rv_IS_45
+H37Rv	ISEScan	insertion_sequence	3558320	3559568	.		.	ID=H37Rv_IS_46;family=IS30;cluster=IS30_173
+H37Rv	ISEScan	insertion_sequence	3710382	3711736	.	+	.	ID=H37Rv_IS_47;family=IS3;cluster=IS3_168
+H37Rv	ISEScan	insertion_sequence	3711610	3713772	.	+	.	ID=H37Rv_IS_48;family=IS110;cluster=IS110_140
+H37Rv	ISEScan	terminal_inverted_repeat	3711610	3711633	.	+	.	ID=H37Rv_IS_48_TIR;parent=H37Rv_IS_48
+H37Rv	ISEScan	terminal_inverted_repeat	3713749	3713772	.	+	.	ID=H37Rv_IS_48_TIR;parent=H37Rv_IS_48
+H37Rv	ISEScan	insertion_sequence	3753350	3754347	.		.	ID=H37Rv_IS_49;family=IS110;cluster=IS110_103|IS110||protein:plasmid:145871
+H37Rv	ISEScan	terminal_inverted_repeat	3753350	3753353	.		.	ID=H37Rv_IS_49_TIR;parent=H37Rv_IS_49
+H37Rv	ISEScan	terminal_inverted_repeat	3754344	3754347	.		.	ID=H37Rv_IS_49_TIR;parent=H37Rv_IS_49
+H37Rv	ISEScan	insertion_sequence	3754570	3755811	.	-	.	ID=H37Rv_IS_50;family=ISL3;cluster=ISL3_119|ISL3||protein:plasmid:158024
+H37Rv	ISEScan	terminal_inverted_repeat	3754570	3754580	.	-	.	ID=H37Rv_IS_50_TIR;parent=H37Rv_IS_50
+H37Rv	ISEScan	terminal_inverted_repeat	3755801	3755811	.	-	.	ID=H37Rv_IS_50_TIR;parent=H37Rv_IS_50
+H37Rv	ISEScan	insertion_sequence	3795058	3796412	.		.	ID=H37Rv_IS_51;family=IS3;cluster=IS3_168
+H37Rv	ISEScan	insertion_sequence	3799987	3801554	.	+	.	ID=H37Rv_IS_52;family=ISNCY;cluster=ISNCY_85
+H37Rv	ISEScan	terminal_inverted_repeat	3799987	3800011	.	+	.	ID=H37Rv_IS_52_TIR;parent=H37Rv_IS_52
+H37Rv	ISEScan	terminal_inverted_repeat	3801530	3801554	.	+	.	ID=H37Rv_IS_52_TIR;parent=H37Rv_IS_52
+H37Rv	ISEScan	insertion_sequence	3843791	3846400	.	-	.	ID=H37Rv_IS_53;family=IS21;cluster=IS21_35
+H37Rv	ISEScan	terminal_inverted_repeat	3843791	3843838	.	-	.	ID=H37Rv_IS_53_TIR;parent=H37Rv_IS_53
+H37Rv	ISEScan	terminal_inverted_repeat	3846354	3846400	.	-	.	ID=H37Rv_IS_53_TIR;parent=H37Rv_IS_53
+H37Rv	ISEScan	insertion_sequence	3847352	3849213	.	-	.	ID=H37Rv_IS_54;family=IS3;cluster=IS3_232
+H37Rv	ISEScan	terminal_inverted_repeat	3847352	3847372	.	-	.	ID=H37Rv_IS_54_TIR;parent=H37Rv_IS_54
+H37Rv	ISEScan	terminal_inverted_repeat	3849193	3849213	.	-	.	ID=H37Rv_IS_54_TIR;parent=H37Rv_IS_54
+H37Rv	ISEScan	insertion_sequence	3848901	3850407	.	-	.	ID=H37Rv_IS_55;family=IS256;cluster=IS256_128
+H37Rv	ISEScan	terminal_inverted_repeat	3848901	3848922	.	-	.	ID=H37Rv_IS_55_TIR;parent=H37Rv_IS_55
+H37Rv	ISEScan	terminal_inverted_repeat	3850386	3850407	.	-	.	ID=H37Rv_IS_55_TIR;parent=H37Rv_IS_55
+H37Rv	ISEScan	insertion_sequence	3890779	3892133	.	+	.	ID=H37Rv_IS_56;family=IS3;cluster=IS3_168
+H37Rv	ISEScan	insertion_sequence	3965313	3965746	.	+	.	ID=H37Rv_IS_57;family=IS21;cluster=IS21_31|IS21||protein:plasmid:23945
+H37Rv	ISEScan	terminal_inverted_repeat	3965313	3965335	.	+	.	ID=H37Rv_IS_57_TIR;parent=H37Rv_IS_57
+H37Rv	ISEScan	terminal_inverted_repeat	3965725	3965746	.	+	.	ID=H37Rv_IS_57_TIR;parent=H37Rv_IS_57
+H37Rv	ISEScan	insertion_sequence	4075666	4077783	.	+	.	ID=H37Rv_IS_58;family=IS21;cluster=IS21_146
+H37Rv	ISEScan	terminal_inverted_repeat	4075666	4075714	.	+	.	ID=H37Rv_IS_58_TIR;parent=H37Rv_IS_58
+H37Rv	ISEScan	terminal_inverted_repeat	4077735	4077783	.	+	.	ID=H37Rv_IS_58_TIR;parent=H37Rv_IS_58
+H37Rv	ISEScan	insertion_sequence	4078463	4079878	.	-	.	ID=H37Rv_IS_59;family=IS256;cluster=IS256_128
+H37Rv	ISEScan	terminal_inverted_repeat	4078463	4078506	.	-	.	ID=H37Rv_IS_59_TIR;parent=H37Rv_IS_59
+H37Rv	ISEScan	terminal_inverted_repeat	4079835	4079878	.	-	.	ID=H37Rv_IS_59_TIR;parent=H37Rv_IS_59
+H37Rv	ISEScan	insertion_sequence	4215983	4216445	.	-	.	ID=H37Rv_IS_60;family=IS481;cluster=IS481_77|IS481||protein:plasmid:142246
+H37Rv	ISEScan	terminal_inverted_repeat	4215983	4216010	.	-	.	ID=H37Rv_IS_60_TIR;parent=H37Rv_IS_60
+H37Rv	ISEScan	terminal_inverted_repeat	4216418	4216445	.	-	.	ID=H37Rv_IS_60_TIR;parent=H37Rv_IS_60
+H37Rv	ISEScan	insertion_sequence	4252900	4254412	.	+	.	ID=H37Rv_IS_61;family=ISL3;cluster=ISL3_143|ISL3||protein:plasmid:23974
+H37Rv	ISEScan	terminal_inverted_repeat	4252900	4252934	.	+	.	ID=H37Rv_IS_61_TIR;parent=H37Rv_IS_61
+H37Rv	ISEScan	terminal_inverted_repeat	4254379	4254412	.	+	.	ID=H37Rv_IS_61_TIR;parent=H37Rv_IS_61
+H37Rv	ISEScan	insertion_sequence	4301563	4303367	.	-	.	ID=H37Rv_IS_62;family=IS200/IS605;cluster=IS200/IS605_96
+H37Rv	ISEScan	insertion_sequence	4318358	4319635	.	+	.	ID=H37Rv_IS_63;family=IS110;cluster=IS110_103|IS110||protein:plasmid:145871
+H37Rv	ISEScan	terminal_inverted_repeat	4318358	4318367	.	+	.	ID=H37Rv_IS_63_TIR;parent=H37Rv_IS_63
+H37Rv	ISEScan	terminal_inverted_repeat	4319626	4319635	.	+	.	ID=H37Rv_IS_63_TIR;parent=H37Rv_IS_63

@@ -1,0 +1,133 @@
+##gff-version 3
+MTBC0	ISEScan	insertion_sequence	1	1889	.	+	.	ID=Anc01refChr0_IS_1;family=IS21;cluster=IS21_259
+MTBC0	ISEScan	terminal_inverted_repeat	1	14	.	+	.	ID=Anc01refChr0_IS_1_TIR;parent=Anc01refChr0_IS_1
+MTBC0	ISEScan	terminal_inverted_repeat	1876	1889	.	+	.	ID=Anc01refChr0_IS_1_TIR;parent=Anc01refChr0_IS_1
+MTBC0	ISEScan	insertion_sequence	705568	706751	.	+	.	ID=Anc01refChr0_IS_2;family=IS200/IS605;cluster=IS200/IS605_138
+MTBC0	ISEScan	insertion_sequence	836547	837052	.	+	.	ID=Anc01refChr0_IS_3;family=ISL3;cluster=ISL3_143|ISL3||protein:plasmid:23974
+MTBC0	ISEScan	terminal_inverted_repeat	836547	836576	.	+	.	ID=Anc01refChr0_IS_3_TIR;parent=Anc01refChr0_IS_3
+MTBC0	ISEScan	terminal_inverted_repeat	837023	837052	.	+	.	ID=Anc01refChr0_IS_3_TIR;parent=Anc01refChr0_IS_3
+MTBC0	ISEScan	insertion_sequence	893250	894501	.	+	.	ID=Anc01refChr0_IS_4;family=IS110;cluster=IS110_140
+MTBC0	ISEScan	terminal_inverted_repeat	893250	893254	.	+	.	ID=Anc01refChr0_IS_4_TIR;parent=Anc01refChr0_IS_4
+MTBC0	ISEScan	terminal_inverted_repeat	894497	894501	.	+	.	ID=Anc01refChr0_IS_4_TIR;parent=Anc01refChr0_IS_4
+MTBC0	ISEScan	insertion_sequence	1028652	1030129	.	-	.	ID=Anc01refChr0_IS_5;family=IS256;cluster=IS256_47
+MTBC0	ISEScan	terminal_inverted_repeat	1028652	1028687	.	-	.	ID=Anc01refChr0_IS_5_TIR;parent=Anc01refChr0_IS_5
+MTBC0	ISEScan	terminal_inverted_repeat	1030094	1030129	.	-	.	ID=Anc01refChr0_IS_5_TIR;parent=Anc01refChr0_IS_5
+MTBC0	ISEScan	insertion_sequence	1030319	1032307	.	+	.	ID=Anc01refChr0_IS_6;family=IS200/IS605;cluster=IS200/IS605_96
+MTBC0	ISEScan	insertion_sequence	1166290	1167253	.	-	.	ID=Anc01refChr0_IS_7;family=ISNCY;cluster=ISNCY_85
+MTBC0	ISEScan	terminal_inverted_repeat	1166290	1166312	.	-	.	ID=Anc01refChr0_IS_7_TIR;parent=Anc01refChr0_IS_7
+MTBC0	ISEScan	terminal_inverted_repeat	1167231	1167253	.	-	.	ID=Anc01refChr0_IS_7_TIR;parent=Anc01refChr0_IS_7
+MTBC0	ISEScan	insertion_sequence	1171537	1172855	.		.	ID=Anc01refChr0_IS_8;family=IS5;cluster=IS5_279
+MTBC0	ISEScan	terminal_inverted_repeat	1171537	1171544	.		.	ID=Anc01refChr0_IS_8_TIR;parent=Anc01refChr0_IS_8
+MTBC0	ISEScan	terminal_inverted_repeat	1172848	1172855	.		.	ID=Anc01refChr0_IS_8_TIR;parent=Anc01refChr0_IS_8
+MTBC0	ISEScan	insertion_sequence	1176645	1178063	.		.	ID=Anc01refChr0_IS_9;family=IS256;cluster=IS256_128
+MTBC0	ISEScan	terminal_inverted_repeat	1176645	1176662	.		.	ID=Anc01refChr0_IS_9_TIR;parent=Anc01refChr0_IS_9
+MTBC0	ISEScan	terminal_inverted_repeat	1178046	1178063	.		.	ID=Anc01refChr0_IS_9_TIR;parent=Anc01refChr0_IS_9
+MTBC0	ISEScan	insertion_sequence	1283688	1284516	.	+	.	ID=Anc01refChr0_IS_10;family=IS701;cluster=IS701_304|IS701||protein:plasmid:141844
+MTBC0	ISEScan	terminal_inverted_repeat	1283688	1283699	.	+	.	ID=Anc01refChr0_IS_10_TIR;parent=Anc01refChr0_IS_10
+MTBC0	ISEScan	terminal_inverted_repeat	1284505	1284516	.	+	.	ID=Anc01refChr0_IS_10_TIR;parent=Anc01refChr0_IS_10
+MTBC0	ISEScan	insertion_sequence	1286284	1287261	.	+	.	ID=Anc01refChr0_IS_11;family=IS5;cluster=IS5_279
+MTBC0	ISEScan	terminal_inverted_repeat	1286284	1286304	.	+	.	ID=Anc01refChr0_IS_11_TIR;parent=Anc01refChr0_IS_11
+MTBC0	ISEScan	terminal_inverted_repeat	1287241	1287261	.	+	.	ID=Anc01refChr0_IS_11_TIR;parent=Anc01refChr0_IS_11
+MTBC0	ISEScan	insertion_sequence	1349746	1351164	.	-	.	ID=Anc01refChr0_IS_12;family=IS256;cluster=IS256_128
+MTBC0	ISEScan	terminal_inverted_repeat	1349746	1349763	.	-	.	ID=Anc01refChr0_IS_12_TIR;parent=Anc01refChr0_IS_12
+MTBC0	ISEScan	terminal_inverted_repeat	1351147	1351164	.	-	.	ID=Anc01refChr0_IS_12_TIR;parent=Anc01refChr0_IS_12
+MTBC0	ISEScan	insertion_sequence	1477206	1478644	.	-	.	ID=Anc01refChr0_IS_13;family=ISL3;cluster=ISL3_143|ISL3||protein:plasmid:23974
+MTBC0	ISEScan	terminal_inverted_repeat	1477206	1477237	.	-	.	ID=Anc01refChr0_IS_13_TIR;parent=Anc01refChr0_IS_13
+MTBC0	ISEScan	terminal_inverted_repeat	1478613	1478644	.	-	.	ID=Anc01refChr0_IS_13_TIR;parent=Anc01refChr0_IS_13
+MTBC0	ISEScan	insertion_sequence	2016222	2017578	.	-	.	ID=Anc01refChr0_IS_14;family=IS3;cluster=IS3_168
+MTBC0	ISEScan	terminal_inverted_repeat	2016222	2016249	.	-	.	ID=Anc01refChr0_IS_14_TIR;parent=Anc01refChr0_IS_14
+MTBC0	ISEScan	terminal_inverted_repeat	2017551	2017578	.	-	.	ID=Anc01refChr0_IS_14_TIR;parent=Anc01refChr0_IS_14
+MTBC0	ISEScan	insertion_sequence	2284177	2285449	.	+	.	ID=Anc01refChr0_IS_15;family=IS110;cluster=IS110_153
+MTBC0	ISEScan	terminal_inverted_repeat	2284177	2284218	.	+	.	ID=Anc01refChr0_IS_15_TIR;parent=Anc01refChr0_IS_15
+MTBC0	ISEScan	terminal_inverted_repeat	2285407	2285449	.	+	.	ID=Anc01refChr0_IS_15_TIR;parent=Anc01refChr0_IS_15
+MTBC0	ISEScan	insertion_sequence	2371714	2374954	.	+	.	ID=Anc01refChr0_IS_16;family=IS3;cluster=IS3_168
+MTBC0	ISEScan	terminal_inverted_repeat	2371714	2371734	.	+	.	ID=Anc01refChr0_IS_16_TIR;parent=Anc01refChr0_IS_16
+MTBC0	ISEScan	terminal_inverted_repeat	2374934	2374954	.	+	.	ID=Anc01refChr0_IS_16_TIR;parent=Anc01refChr0_IS_16
+MTBC0	ISEScan	insertion_sequence	2465152	2466335	.	-	.	ID=Anc01refChr0_IS_17;family=IS110;cluster=IS110_284
+MTBC0	ISEScan	terminal_inverted_repeat	2465152	2465169	.	-	.	ID=Anc01refChr0_IS_17_TIR;parent=Anc01refChr0_IS_17
+MTBC0	ISEScan	terminal_inverted_repeat	2466318	2466335	.	-	.	ID=Anc01refChr0_IS_17_TIR;parent=Anc01refChr0_IS_17
+MTBC0	ISEScan	insertion_sequence	2744788	2746006	.	-	.	ID=Anc01refChr0_IS_18;family=IS110;cluster=IS110_284
+MTBC0	ISEScan	terminal_inverted_repeat	2744788	2744828	.	-	.	ID=Anc01refChr0_IS_18_TIR;parent=Anc01refChr0_IS_18
+MTBC0	ISEScan	terminal_inverted_repeat	2745966	2746006	.	-	.	ID=Anc01refChr0_IS_18_TIR;parent=Anc01refChr0_IS_18
+MTBC0	ISEScan	insertion_sequence	2851392	2852810	.		.	ID=Anc01refChr0_IS_19;family=IS256;cluster=IS256_128
+MTBC0	ISEScan	terminal_inverted_repeat	2851392	2851409	.		.	ID=Anc01refChr0_IS_19_TIR;parent=Anc01refChr0_IS_19
+MTBC0	ISEScan	terminal_inverted_repeat	2852793	2852810	.		.	ID=Anc01refChr0_IS_19_TIR;parent=Anc01refChr0_IS_19
+MTBC0	ISEScan	insertion_sequence	3004923	3006283	.	+	.	ID=Anc01refChr0_IS_20;family=IS256;cluster=IS256_128
+MTBC0	ISEScan	terminal_inverted_repeat	3004923	3004935	.	+	.	ID=Anc01refChr0_IS_20_TIR;parent=Anc01refChr0_IS_20
+MTBC0	ISEScan	terminal_inverted_repeat	3006271	3006283	.	+	.	ID=Anc01refChr0_IS_20_TIR;parent=Anc01refChr0_IS_20
+MTBC0	ISEScan	insertion_sequence	3122610	3124577	.	-	.	ID=Anc01refChr0_IS_21;family=IS200/IS605;cluster=IS200/IS605_96
+MTBC0	ISEScan	insertion_sequence	3135048	3137276	.	+	.	ID=Anc01refChr0_IS_22;family=ISNCY;cluster=ISNCY_54
+MTBC0	ISEScan	terminal_inverted_repeat	3135048	3135065	.	+	.	ID=Anc01refChr0_IS_22_TIR;parent=Anc01refChr0_IS_22
+MTBC0	ISEScan	terminal_inverted_repeat	3137259	3137276	.	+	.	ID=Anc01refChr0_IS_22_TIR;parent=Anc01refChr0_IS_22
+MTBC0	ISEScan	insertion_sequence	3137824	3138825	.	-	.	ID=Anc01refChr0_IS_23;family=ISL3;cluster=ISL3_119|ISL3||protein:plasmid:158024
+MTBC0	ISEScan	terminal_inverted_repeat	3137824	3137850	.	-	.	ID=Anc01refChr0_IS_23_TIR;parent=Anc01refChr0_IS_23
+MTBC0	ISEScan	terminal_inverted_repeat	3138799	3138825	.	-	.	ID=Anc01refChr0_IS_23_TIR;parent=Anc01refChr0_IS_23
+MTBC0	ISEScan	insertion_sequence	3138924	3141498	.	+	.	ID=Anc01refChr0_IS_24;family=IS481;cluster=IS481_77|IS481||protein:plasmid:142246
+MTBC0	ISEScan	terminal_inverted_repeat	3138924	3138956	.	+	.	ID=Anc01refChr0_IS_24_TIR;parent=Anc01refChr0_IS_24
+MTBC0	ISEScan	terminal_inverted_repeat	3141466	3141498	.	+	.	ID=Anc01refChr0_IS_24_TIR;parent=Anc01refChr0_IS_24
+MTBC0	ISEScan	insertion_sequence	3215058	3216961	.	-	.	ID=Anc01refChr0_IS_25;family=IS200/IS605;cluster=IS200/IS605_96
+MTBC0	ISEScan	insertion_sequence	3309363	3311575	.	+	.	ID=Anc01refChr0_IS_26;family=IS21;cluster=IS21_146
+MTBC0	ISEScan	terminal_inverted_repeat	3309363	3309423	.	+	.	ID=Anc01refChr0_IS_26_TIR;parent=Anc01refChr0_IS_26
+MTBC0	ISEScan	terminal_inverted_repeat	3311515	3311575	.	+	.	ID=Anc01refChr0_IS_26_TIR;parent=Anc01refChr0_IS_26
+MTBC0	ISEScan	insertion_sequence	3333910	3335287	.	+	.	ID=Anc01refChr0_IS_27;family=ISNCY;cluster=ISNCY_85
+MTBC0	ISEScan	terminal_inverted_repeat	3333910	3333920	.	+	.	ID=Anc01refChr0_IS_27_TIR;parent=Anc01refChr0_IS_27
+MTBC0	ISEScan	terminal_inverted_repeat	3335277	3335287	.	+	.	ID=Anc01refChr0_IS_27_TIR;parent=Anc01refChr0_IS_27
+MTBC0	ISEScan	insertion_sequence	3353244	3356921	.	-	.	ID=Anc01refChr0_IS_28;family=IS200/IS605;cluster=IS200/IS605_96
+MTBC0	ISEScan	insertion_sequence	3402631	3404049	.		.	ID=Anc01refChr0_IS_29;family=IS256;cluster=IS256_128
+MTBC0	ISEScan	terminal_inverted_repeat	3402631	3402648	.		.	ID=Anc01refChr0_IS_29_TIR;parent=Anc01refChr0_IS_29
+MTBC0	ISEScan	terminal_inverted_repeat	3404032	3404049	.		.	ID=Anc01refChr0_IS_29_TIR;parent=Anc01refChr0_IS_29
+MTBC0	ISEScan	insertion_sequence	3502699	3504117	.	+	.	ID=Anc01refChr0_IS_30;family=IS256;cluster=IS256_128
+MTBC0	ISEScan	terminal_inverted_repeat	3502699	3502716	.	+	.	ID=Anc01refChr0_IS_30_TIR;parent=Anc01refChr0_IS_30
+MTBC0	ISEScan	terminal_inverted_repeat	3504100	3504117	.	+	.	ID=Anc01refChr0_IS_30_TIR;parent=Anc01refChr0_IS_30
+MTBC0	ISEScan	insertion_sequence	3514498	3515851	.	-	.	ID=Anc01refChr0_IS_31;family=ISNCY;cluster=ISNCY_54
+MTBC0	ISEScan	terminal_inverted_repeat	3514498	3514526	.	-	.	ID=Anc01refChr0_IS_31_TIR;parent=Anc01refChr0_IS_31
+MTBC0	ISEScan	terminal_inverted_repeat	3515823	3515851	.	-	.	ID=Anc01refChr0_IS_31_TIR;parent=Anc01refChr0_IS_31
+MTBC0	ISEScan	insertion_sequence	3573393	3575036	.	-	.	ID=Anc01refChr0_IS_32;family=IS21;cluster=IS21_62
+MTBC0	ISEScan	terminal_inverted_repeat	3573393	3573410	.	-	.	ID=Anc01refChr0_IS_32_TIR;parent=Anc01refChr0_IS_32
+MTBC0	ISEScan	terminal_inverted_repeat	3575019	3575036	.	-	.	ID=Anc01refChr0_IS_32_TIR;parent=Anc01refChr0_IS_32
+MTBC0	ISEScan	insertion_sequence	3579394	3580783	.	-	.	ID=Anc01refChr0_IS_33;family=IS30;cluster=IS30_173
+MTBC0	ISEScan	terminal_inverted_repeat	3579394	3579456	.	-	.	ID=Anc01refChr0_IS_33_TIR;parent=Anc01refChr0_IS_33
+MTBC0	ISEScan	terminal_inverted_repeat	3580721	3580783	.	-	.	ID=Anc01refChr0_IS_33_TIR;parent=Anc01refChr0_IS_33
+MTBC0	ISEScan	insertion_sequence	3736235	3737530	.	-	.	ID=Anc01refChr0_IS_34;family=IS3;cluster=IS3_168
+MTBC0	ISEScan	terminal_inverted_repeat	3736235	3736253	.	-	.	ID=Anc01refChr0_IS_34_TIR;parent=Anc01refChr0_IS_34
+MTBC0	ISEScan	terminal_inverted_repeat	3737512	3737530	.	-	.	ID=Anc01refChr0_IS_34_TIR;parent=Anc01refChr0_IS_34
+MTBC0	ISEScan	insertion_sequence	3737531	3739369	.		.	ID=Anc01refChr0_IS_35;family=IS110;cluster=IS110_140
+MTBC0	ISEScan	terminal_inverted_repeat	3737531	3737535	.		.	ID=Anc01refChr0_IS_35_TIR;parent=Anc01refChr0_IS_35
+MTBC0	ISEScan	terminal_inverted_repeat	3739365	3739369	.		.	ID=Anc01refChr0_IS_35_TIR;parent=Anc01refChr0_IS_35
+MTBC0	ISEScan	insertion_sequence	3780042	3781046	.		.	ID=Anc01refChr0_IS_36;family=IS110;cluster=IS110_103|IS110||protein:plasmid:145871
+MTBC0	ISEScan	terminal_inverted_repeat	3780042	3780045	.		.	ID=Anc01refChr0_IS_36_TIR;parent=Anc01refChr0_IS_36
+MTBC0	ISEScan	terminal_inverted_repeat	3781043	3781046	.		.	ID=Anc01refChr0_IS_36_TIR;parent=Anc01refChr0_IS_36
+MTBC0	ISEScan	insertion_sequence	3781263	3782504	.	-	.	ID=Anc01refChr0_IS_37;family=ISL3;cluster=ISL3_119|ISL3||protein:plasmid:158024
+MTBC0	ISEScan	terminal_inverted_repeat	3781263	3781273	.	-	.	ID=Anc01refChr0_IS_37_TIR;parent=Anc01refChr0_IS_37
+MTBC0	ISEScan	terminal_inverted_repeat	3782494	3782504	.	-	.	ID=Anc01refChr0_IS_37_TIR;parent=Anc01refChr0_IS_37
+MTBC0	ISEScan	insertion_sequence	3825348	3826915	.	+	.	ID=Anc01refChr0_IS_38;family=ISNCY;cluster=ISNCY_85
+MTBC0	ISEScan	terminal_inverted_repeat	3825348	3825372	.	+	.	ID=Anc01refChr0_IS_38_TIR;parent=Anc01refChr0_IS_38
+MTBC0	ISEScan	terminal_inverted_repeat	3826891	3826915	.	+	.	ID=Anc01refChr0_IS_38_TIR;parent=Anc01refChr0_IS_38
+MTBC0	ISEScan	insertion_sequence	3869229	3871837	.	-	.	ID=Anc01refChr0_IS_39;family=IS21;cluster=IS21_35
+MTBC0	ISEScan	terminal_inverted_repeat	3869229	3869276	.	-	.	ID=Anc01refChr0_IS_39_TIR;parent=Anc01refChr0_IS_39
+MTBC0	ISEScan	terminal_inverted_repeat	3871791	3871837	.	-	.	ID=Anc01refChr0_IS_39_TIR;parent=Anc01refChr0_IS_39
+MTBC0	ISEScan	insertion_sequence	3873677	3874659	.	-	.	ID=Anc01refChr0_IS_40;family=IS3;cluster=IS3_232
+MTBC0	ISEScan	terminal_inverted_repeat	3873677	3873705	.	-	.	ID=Anc01refChr0_IS_40_TIR;parent=Anc01refChr0_IS_40
+MTBC0	ISEScan	terminal_inverted_repeat	3874631	3874659	.	-	.	ID=Anc01refChr0_IS_40_TIR;parent=Anc01refChr0_IS_40
+MTBC0	ISEScan	insertion_sequence	3874834	3876355	.	-	.	ID=Anc01refChr0_IS_41;family=IS256;cluster=IS256_128
+MTBC0	ISEScan	terminal_inverted_repeat	3874834	3874851	.	-	.	ID=Anc01refChr0_IS_41_TIR;parent=Anc01refChr0_IS_41
+MTBC0	ISEScan	terminal_inverted_repeat	3876338	3876355	.	-	.	ID=Anc01refChr0_IS_41_TIR;parent=Anc01refChr0_IS_41
+MTBC0	ISEScan	insertion_sequence	3988990	3989423	.	+	.	ID=Anc01refChr0_IS_42;family=IS21;cluster=IS21_31|IS21||protein:plasmid:23945
+MTBC0	ISEScan	terminal_inverted_repeat	3988990	3989012	.	+	.	ID=Anc01refChr0_IS_42_TIR;parent=Anc01refChr0_IS_42
+MTBC0	ISEScan	terminal_inverted_repeat	3989402	3989423	.	+	.	ID=Anc01refChr0_IS_42_TIR;parent=Anc01refChr0_IS_42
+MTBC0	ISEScan	insertion_sequence	4099370	4101488	.	+	.	ID=Anc01refChr0_IS_43;family=IS21;cluster=IS21_146
+MTBC0	ISEScan	terminal_inverted_repeat	4099370	4099418	.	+	.	ID=Anc01refChr0_IS_43_TIR;parent=Anc01refChr0_IS_43
+MTBC0	ISEScan	terminal_inverted_repeat	4101440	4101488	.	+	.	ID=Anc01refChr0_IS_43_TIR;parent=Anc01refChr0_IS_43
+MTBC0	ISEScan	insertion_sequence	4102168	4103583	.	-	.	ID=Anc01refChr0_IS_44;family=IS256;cluster=IS256_128
+MTBC0	ISEScan	terminal_inverted_repeat	4102168	4102211	.	-	.	ID=Anc01refChr0_IS_44_TIR;parent=Anc01refChr0_IS_44
+MTBC0	ISEScan	terminal_inverted_repeat	4103540	4103583	.	-	.	ID=Anc01refChr0_IS_44_TIR;parent=Anc01refChr0_IS_44
+MTBC0	ISEScan	insertion_sequence	4239677	4240661	.	-	.	ID=Anc01refChr0_IS_45;family=IS481;cluster=IS481_77|IS481||protein:plasmid:142246
+MTBC0	ISEScan	terminal_inverted_repeat	4239677	4239700	.	-	.	ID=Anc01refChr0_IS_45_TIR;parent=Anc01refChr0_IS_45
+MTBC0	ISEScan	terminal_inverted_repeat	4240638	4240661	.	-	.	ID=Anc01refChr0_IS_45_TIR;parent=Anc01refChr0_IS_45
+MTBC0	ISEScan	insertion_sequence	4276975	4278479	.	+	.	ID=Anc01refChr0_IS_46;family=ISL3;cluster=ISL3_143|ISL3||protein:plasmid:23974
+MTBC0	ISEScan	terminal_inverted_repeat	4276975	4276997	.	+	.	ID=Anc01refChr0_IS_46_TIR;parent=Anc01refChr0_IS_46
+MTBC0	ISEScan	terminal_inverted_repeat	4278457	4278479	.	+	.	ID=Anc01refChr0_IS_46_TIR;parent=Anc01refChr0_IS_46
+MTBC0	ISEScan	insertion_sequence	4325673	4327477	.	-	.	ID=Anc01refChr0_IS_47;family=IS200/IS605;cluster=IS200/IS605_96
+MTBC0	ISEScan	insertion_sequence	4342469	4343745	.	+	.	ID=Anc01refChr0_IS_48;family=IS110;cluster=IS110_103|IS110||protein:plasmid:145871
+MTBC0	ISEScan	terminal_inverted_repeat	4342469	4342478	.	+	.	ID=Anc01refChr0_IS_48_TIR;parent=Anc01refChr0_IS_48
+MTBC0	ISEScan	terminal_inverted_repeat	4343736	4343745	.	+	.	ID=Anc01refChr0_IS_48_TIR;parent=Anc01refChr0_IS_48

@@ -1,0 +1,145 @@
+##gff-version 3
+RW-TB008	ISEScan	insertion_sequence	1	1889	.	+	.	ID=RW-TB008_IS_1;family=IS21;cluster=IS21_259
+RW-TB008	ISEScan	terminal_inverted_repeat	1	14	.	+	.	ID=RW-TB008_IS_1_TIR;parent=RW-TB008_IS_1
+RW-TB008	ISEScan	terminal_inverted_repeat	1876	1889	.	+	.	ID=RW-TB008_IS_1_TIR;parent=RW-TB008_IS_1
+RW-TB008	ISEScan	insertion_sequence	697681	698864	.	+	.	ID=RW-TB008_IS_2;family=IS200/IS605;cluster=IS200/IS605_138
+RW-TB008	ISEScan	insertion_sequence	828647	829152	.	+	.	ID=RW-TB008_IS_3;family=ISL3;cluster=ISL3_143|ISL3||protein:plasmid:23974
+RW-TB008	ISEScan	terminal_inverted_repeat	828647	828676	.	+	.	ID=RW-TB008_IS_3_TIR;parent=RW-TB008_IS_3
+RW-TB008	ISEScan	terminal_inverted_repeat	829123	829152	.	+	.	ID=RW-TB008_IS_3_TIR;parent=RW-TB008_IS_3
+RW-TB008	ISEScan	insertion_sequence	885619	886973	.		.	ID=RW-TB008_IS_4;family=IS3;cluster=IS3_168
+RW-TB008	ISEScan	insertion_sequence	886988	888233	.	+	.	ID=RW-TB008_IS_5;family=IS110;cluster=IS110_140
+RW-TB008	ISEScan	terminal_inverted_repeat	886988	886991	.	+	.	ID=RW-TB008_IS_5_TIR;parent=RW-TB008_IS_5
+RW-TB008	ISEScan	terminal_inverted_repeat	888230	888233	.	+	.	ID=RW-TB008_IS_5_TIR;parent=RW-TB008_IS_5
+RW-TB008	ISEScan	insertion_sequence	1022249	1023726	.	-	.	ID=RW-TB008_IS_6;family=IS256;cluster=IS256_47
+RW-TB008	ISEScan	terminal_inverted_repeat	1022249	1022284	.	-	.	ID=RW-TB008_IS_6_TIR;parent=RW-TB008_IS_6
+RW-TB008	ISEScan	terminal_inverted_repeat	1023691	1023726	.	-	.	ID=RW-TB008_IS_6_TIR;parent=RW-TB008_IS_6
+RW-TB008	ISEScan	insertion_sequence	1023916	1025904	.	+	.	ID=RW-TB008_IS_7;family=IS200/IS605;cluster=IS200/IS605_96
+RW-TB008	ISEScan	insertion_sequence	1160448	1161531	.	-	.	ID=RW-TB008_IS_8;family=ISNCY;cluster=ISNCY_85
+RW-TB008	ISEScan	terminal_inverted_repeat	1160448	1160462	.	-	.	ID=RW-TB008_IS_8_TIR;parent=RW-TB008_IS_8
+RW-TB008	ISEScan	terminal_inverted_repeat	1161517	1161531	.	-	.	ID=RW-TB008_IS_8_TIR;parent=RW-TB008_IS_8
+RW-TB008	ISEScan	insertion_sequence	1165579	1166932	.		.	ID=RW-TB008_IS_9;family=IS5;cluster=IS5_279
+RW-TB008	ISEScan	terminal_inverted_repeat	1165579	1165586	.		.	ID=RW-TB008_IS_9_TIR;parent=RW-TB008_IS_9
+RW-TB008	ISEScan	terminal_inverted_repeat	1166925	1166932	.		.	ID=RW-TB008_IS_9_TIR;parent=RW-TB008_IS_9
+RW-TB008	ISEScan	insertion_sequence	1170716	1172118	.	+	.	ID=RW-TB008_IS_10;family=IS256;cluster=IS256_128
+RW-TB008	ISEScan	terminal_inverted_repeat	1170716	1170725	.	+	.	ID=RW-TB008_IS_10_TIR;parent=RW-TB008_IS_10
+RW-TB008	ISEScan	terminal_inverted_repeat	1172109	1172118	.	+	.	ID=RW-TB008_IS_10_TIR;parent=RW-TB008_IS_10
+RW-TB008	ISEScan	insertion_sequence	1277772	1278600	.	+	.	ID=RW-TB008_IS_11;family=IS701;cluster=IS701_304|IS701||protein:plasmid:141844
+RW-TB008	ISEScan	terminal_inverted_repeat	1277772	1277783	.	+	.	ID=RW-TB008_IS_11_TIR;parent=RW-TB008_IS_11
+RW-TB008	ISEScan	terminal_inverted_repeat	1278589	1278600	.	+	.	ID=RW-TB008_IS_11_TIR;parent=RW-TB008_IS_11
+RW-TB008	ISEScan	insertion_sequence	1280040	1281300	.	+	.	ID=RW-TB008_IS_12;family=IS5;cluster=IS5_279
+RW-TB008	ISEScan	terminal_inverted_repeat	1280040	1280083	.	+	.	ID=RW-TB008_IS_12_TIR;parent=RW-TB008_IS_12
+RW-TB008	ISEScan	terminal_inverted_repeat	1281257	1281300	.	+	.	ID=RW-TB008_IS_12_TIR;parent=RW-TB008_IS_12
+RW-TB008	ISEScan	insertion_sequence	1343793	1345195	.	-	.	ID=RW-TB008_IS_13;family=IS256;cluster=IS256_128
+RW-TB008	ISEScan	terminal_inverted_repeat	1343793	1343802	.	-	.	ID=RW-TB008_IS_13_TIR;parent=RW-TB008_IS_13
+RW-TB008	ISEScan	terminal_inverted_repeat	1345186	1345195	.	-	.	ID=RW-TB008_IS_13_TIR;parent=RW-TB008_IS_13
+RW-TB008	ISEScan	insertion_sequence	1470742	1472136	.		.	ID=RW-TB008_IS_14;family=ISL3;cluster=ISL3_143|ISL3||protein:plasmid:23974
+RW-TB008	ISEScan	terminal_inverted_repeat	1470742	1470749	.		.	ID=RW-TB008_IS_14_TIR;parent=RW-TB008_IS_14
+RW-TB008	ISEScan	terminal_inverted_repeat	1472129	1472136	.		.	ID=RW-TB008_IS_14_TIR;parent=RW-TB008_IS_14
+RW-TB008	ISEScan	insertion_sequence	1534053	1535407	.	-	.	ID=RW-TB008_IS_15;family=IS3;cluster=IS3_168
+RW-TB008	ISEScan	insertion_sequence	1767409	1768764	.		.	ID=RW-TB008_IS_16;family=IS3;cluster=IS3_168
+RW-TB008	ISEScan	insertion_sequence	1878289	1879642	.		.	ID=RW-TB008_IS_17;family=IS3;cluster=IS3_168
+RW-TB008	ISEScan	insertion_sequence	1967921	1969275	.	+	.	ID=RW-TB008_IS_18;family=IS3;cluster=IS3_168
+RW-TB008	ISEScan	insertion_sequence	1983440	1984794	.		.	ID=RW-TB008_IS_19;family=IS3;cluster=IS3_168
+RW-TB008	ISEScan	insertion_sequence	1990109	1991463	.	+	.	ID=RW-TB008_IS_20;family=IS3;cluster=IS3_168
+RW-TB008	ISEScan	insertion_sequence	1991320	1992437	.	-	.	ID=RW-TB008_IS_21;family=IS3;cluster=IS3_168
+RW-TB008	ISEScan	terminal_inverted_repeat	1991320	1991346	.	-	.	ID=RW-TB008_IS_21_TIR;parent=RW-TB008_IS_21
+RW-TB008	ISEScan	terminal_inverted_repeat	1992411	1992437	.	-	.	ID=RW-TB008_IS_21_TIR;parent=RW-TB008_IS_21
+RW-TB008	ISEScan	insertion_sequence	1992296	1993283	.		.	ID=RW-TB008_IS_22;family=IS3;cluster=IS3_168
+RW-TB008	ISEScan	terminal_inverted_repeat	1992296	1992302	.		.	ID=RW-TB008_IS_22_TIR;parent=RW-TB008_IS_22
+RW-TB008	ISEScan	terminal_inverted_repeat	1993277	1993283	.		.	ID=RW-TB008_IS_22_TIR;parent=RW-TB008_IS_22
+RW-TB008	ISEScan	insertion_sequence	2031385	2032739	.		.	ID=RW-TB008_IS_23;family=IS3;cluster=IS3_168
+RW-TB008	ISEScan	insertion_sequence	2256701	2257973	.	+	.	ID=RW-TB008_IS_24;family=IS110;cluster=IS110_153
+RW-TB008	ISEScan	terminal_inverted_repeat	2256701	2256742	.	+	.	ID=RW-TB008_IS_24_TIR;parent=RW-TB008_IS_24
+RW-TB008	ISEScan	terminal_inverted_repeat	2257931	2257973	.	+	.	ID=RW-TB008_IS_24_TIR;parent=RW-TB008_IS_24
+RW-TB008	ISEScan	insertion_sequence	2344044	2347073	.	+	.	ID=RW-TB008_IS_25;family=IS3;cluster=IS3_168
+RW-TB008	ISEScan	terminal_inverted_repeat	2344044	2344063	.	+	.	ID=RW-TB008_IS_25_TIR;parent=RW-TB008_IS_25
+RW-TB008	ISEScan	terminal_inverted_repeat	2347054	2347073	.	+	.	ID=RW-TB008_IS_25_TIR;parent=RW-TB008_IS_25
+RW-TB008	ISEScan	insertion_sequence	2366569	2367923	.	+	.	ID=RW-TB008_IS_26;family=IS3;cluster=IS3_168
+RW-TB008	ISEScan	insertion_sequence	2368130	2369484	.		.	ID=RW-TB008_IS_27;family=IS3;cluster=IS3_168
+RW-TB008	ISEScan	insertion_sequence	2440439	2441329	.	-	.	ID=RW-TB008_IS_28;family=IS110;cluster=IS110_284
+RW-TB008	ISEScan	terminal_inverted_repeat	2440439	2440447	.	-	.	ID=RW-TB008_IS_28_TIR;parent=RW-TB008_IS_28
+RW-TB008	ISEScan	terminal_inverted_repeat	2441321	2441329	.	-	.	ID=RW-TB008_IS_28_TIR;parent=RW-TB008_IS_28
+RW-TB008	ISEScan	insertion_sequence	2462654	2464008	.		.	ID=RW-TB008_IS_29;family=IS3;cluster=IS3_168
+RW-TB008	ISEScan	insertion_sequence	2472884	2474238	.	+	.	ID=RW-TB008_IS_30;family=IS3;cluster=IS3_168
+RW-TB008	ISEScan	insertion_sequence	2558333	2559687	.		.	ID=RW-TB008_IS_31;family=IS3;cluster=IS3_168
+RW-TB008	ISEScan	insertion_sequence	2583314	2584669	.	-	.	ID=RW-TB008_IS_32;family=IS3;cluster=IS3_168
+RW-TB008	ISEScan	insertion_sequence	2632171	2633525	.	-	.	ID=RW-TB008_IS_33;family=IS3;cluster=IS3_168
+RW-TB008	ISEScan	insertion_sequence	2717007	2717796	.	-	.	ID=RW-TB008_IS_34;family=IS110;cluster=IS110_284
+RW-TB008	ISEScan	terminal_inverted_repeat	2717007	2717025	.	-	.	ID=RW-TB008_IS_34_TIR;parent=RW-TB008_IS_34
+RW-TB008	ISEScan	terminal_inverted_repeat	2717778	2717796	.	-	.	ID=RW-TB008_IS_34_TIR;parent=RW-TB008_IS_34
+RW-TB008	ISEScan	insertion_sequence	2823282	2824684	.		.	ID=RW-TB008_IS_35;family=IS256;cluster=IS256_128
+RW-TB008	ISEScan	terminal_inverted_repeat	2823282	2823291	.		.	ID=RW-TB008_IS_35_TIR;parent=RW-TB008_IS_35
+RW-TB008	ISEScan	terminal_inverted_repeat	2824675	2824684	.		.	ID=RW-TB008_IS_35_TIR;parent=RW-TB008_IS_35
+RW-TB008	ISEScan	insertion_sequence	2824958	2826312	.		.	ID=RW-TB008_IS_36;family=IS3;cluster=IS3_168
+RW-TB008	ISEScan	insertion_sequence	2978325	2979152	.	+	.	ID=RW-TB008_IS_37;family=IS256;cluster=IS256_128
+RW-TB008	ISEScan	terminal_inverted_repeat	2978325	2978354	.	+	.	ID=RW-TB008_IS_37_TIR;parent=RW-TB008_IS_37
+RW-TB008	ISEScan	terminal_inverted_repeat	2979123	2979152	.	+	.	ID=RW-TB008_IS_37_TIR;parent=RW-TB008_IS_37
+RW-TB008	ISEScan	insertion_sequence	3095547	3097514	.	-	.	ID=RW-TB008_IS_38;family=IS200/IS605;cluster=IS200/IS605_96
+RW-TB008	ISEScan	insertion_sequence	3108326	3110079	.	+	.	ID=RW-TB008_IS_39;family=ISNCY;cluster=ISNCY_54
+RW-TB008	ISEScan	terminal_inverted_repeat	3108326	3108344	.	+	.	ID=RW-TB008_IS_39_TIR;parent=RW-TB008_IS_39
+RW-TB008	ISEScan	terminal_inverted_repeat	3110061	3110079	.	+	.	ID=RW-TB008_IS_39_TIR;parent=RW-TB008_IS_39
+RW-TB008	ISEScan	insertion_sequence	3110954	3112308	.	-	.	ID=RW-TB008_IS_40;family=IS3;cluster=IS3_168
+RW-TB008	ISEScan	insertion_sequence	3184030	3185910	.	-	.	ID=RW-TB008_IS_41;family=IS200/IS605;cluster=IS200/IS605_96
+RW-TB008	ISEScan	insertion_sequence	3278143	3280355	.	+	.	ID=RW-TB008_IS_42;family=IS21;cluster=IS21_146
+RW-TB008	ISEScan	terminal_inverted_repeat	3278143	3278203	.	+	.	ID=RW-TB008_IS_42_TIR;parent=RW-TB008_IS_42
+RW-TB008	ISEScan	terminal_inverted_repeat	3280295	3280355	.	+	.	ID=RW-TB008_IS_42_TIR;parent=RW-TB008_IS_42
+RW-TB008	ISEScan	insertion_sequence	3302504	3302931	.	+	.	ID=RW-TB008_IS_43;family=ISNCY;cluster=ISNCY_85
+RW-TB008	ISEScan	terminal_inverted_repeat	3302504	3302530	.	+	.	ID=RW-TB008_IS_43_TIR;parent=RW-TB008_IS_43
+RW-TB008	ISEScan	terminal_inverted_repeat	3302905	3302931	.	+	.	ID=RW-TB008_IS_43_TIR;parent=RW-TB008_IS_43
+RW-TB008	ISEScan	insertion_sequence	3321368	3325045	.	-	.	ID=RW-TB008_IS_44;family=IS200/IS605;cluster=IS200/IS605_96
+RW-TB008	ISEScan	insertion_sequence	3368257	3369659	.		.	ID=RW-TB008_IS_45;family=IS256;cluster=IS256_128
+RW-TB008	ISEScan	terminal_inverted_repeat	3368257	3368266	.		.	ID=RW-TB008_IS_45_TIR;parent=RW-TB008_IS_45
+RW-TB008	ISEScan	terminal_inverted_repeat	3369650	3369659	.		.	ID=RW-TB008_IS_45_TIR;parent=RW-TB008_IS_45
+RW-TB008	ISEScan	insertion_sequence	3468301	3469703	.	+	.	ID=RW-TB008_IS_46;family=IS256;cluster=IS256_128
+RW-TB008	ISEScan	terminal_inverted_repeat	3468301	3468310	.	+	.	ID=RW-TB008_IS_46_TIR;parent=RW-TB008_IS_46
+RW-TB008	ISEScan	terminal_inverted_repeat	3469694	3469703	.	+	.	ID=RW-TB008_IS_46_TIR;parent=RW-TB008_IS_46
+RW-TB008	ISEScan	insertion_sequence	3473396	3474750	.	+	.	ID=RW-TB008_IS_47;family=IS3;cluster=IS3_168
+RW-TB008	ISEScan	insertion_sequence	3481462	3482815	.	-	.	ID=RW-TB008_IS_48;family=ISNCY;cluster=ISNCY_54
+RW-TB008	ISEScan	terminal_inverted_repeat	3481462	3481490	.	-	.	ID=RW-TB008_IS_48_TIR;parent=RW-TB008_IS_48
+RW-TB008	ISEScan	terminal_inverted_repeat	3482787	3482815	.	-	.	ID=RW-TB008_IS_48_TIR;parent=RW-TB008_IS_48
+RW-TB008	ISEScan	insertion_sequence	3538212	3539855	.	-	.	ID=RW-TB008_IS_49;family=IS21;cluster=IS21_62
+RW-TB008	ISEScan	terminal_inverted_repeat	3538212	3538229	.	-	.	ID=RW-TB008_IS_49_TIR;parent=RW-TB008_IS_49
+RW-TB008	ISEScan	terminal_inverted_repeat	3539838	3539855	.	-	.	ID=RW-TB008_IS_49_TIR;parent=RW-TB008_IS_49
+RW-TB008	ISEScan	insertion_sequence	3540652	3542006	.	-	.	ID=RW-TB008_IS_50;family=IS3;cluster=IS3_168
+RW-TB008	ISEScan	insertion_sequence	3545132	3546521	.	-	.	ID=RW-TB008_IS_51;family=IS30;cluster=IS30_173
+RW-TB008	ISEScan	terminal_inverted_repeat	3545132	3545194	.	-	.	ID=RW-TB008_IS_51_TIR;parent=RW-TB008_IS_51
+RW-TB008	ISEScan	terminal_inverted_repeat	3546459	3546521	.	-	.	ID=RW-TB008_IS_51_TIR;parent=RW-TB008_IS_51
+RW-TB008	ISEScan	insertion_sequence	3697226	3698580	.		.	ID=RW-TB008_IS_52;family=IS3;cluster=IS3_168
+RW-TB008	ISEScan	insertion_sequence	3698736	3700579	.		.	ID=RW-TB008_IS_53;family=IS110;cluster=IS110_140
+RW-TB008	ISEScan	terminal_inverted_repeat	3698736	3698740	.		.	ID=RW-TB008_IS_53_TIR;parent=RW-TB008_IS_53
+RW-TB008	ISEScan	terminal_inverted_repeat	3700575	3700579	.		.	ID=RW-TB008_IS_53_TIR;parent=RW-TB008_IS_53
+RW-TB008	ISEScan	insertion_sequence	3739191	3740189	.		.	ID=RW-TB008_IS_54;family=IS110;cluster=IS110_103|IS110||protein:plasmid:145871
+RW-TB008	ISEScan	terminal_inverted_repeat	3739191	3739194	.		.	ID=RW-TB008_IS_54_TIR;parent=RW-TB008_IS_54
+RW-TB008	ISEScan	terminal_inverted_repeat	3740186	3740189	.		.	ID=RW-TB008_IS_54_TIR;parent=RW-TB008_IS_54
+RW-TB008	ISEScan	insertion_sequence	3740412	3741653	.	-	.	ID=RW-TB008_IS_55;family=ISL3;cluster=ISL3_119|ISL3||protein:plasmid:158024
+RW-TB008	ISEScan	terminal_inverted_repeat	3740412	3740422	.	-	.	ID=RW-TB008_IS_55_TIR;parent=RW-TB008_IS_55
+RW-TB008	ISEScan	terminal_inverted_repeat	3741643	3741653	.	-	.	ID=RW-TB008_IS_55_TIR;parent=RW-TB008_IS_55
+RW-TB008	ISEScan	insertion_sequence	3779144	3780706	.	+	.	ID=RW-TB008_IS_56;family=ISNCY;cluster=ISNCY_85
+RW-TB008	ISEScan	terminal_inverted_repeat	3779144	3779168	.	+	.	ID=RW-TB008_IS_56_TIR;parent=RW-TB008_IS_56
+RW-TB008	ISEScan	terminal_inverted_repeat	3780682	3780706	.	+	.	ID=RW-TB008_IS_56_TIR;parent=RW-TB008_IS_56
+RW-TB008	ISEScan	insertion_sequence	3821597	3823458	.	-	.	ID=RW-TB008_IS_57;family=IS3;cluster=IS3_232
+RW-TB008	ISEScan	terminal_inverted_repeat	3821597	3821617	.	-	.	ID=RW-TB008_IS_57_TIR;parent=RW-TB008_IS_57
+RW-TB008	ISEScan	terminal_inverted_repeat	3823438	3823458	.	-	.	ID=RW-TB008_IS_57_TIR;parent=RW-TB008_IS_57
+RW-TB008	ISEScan	insertion_sequence	3823146	3824652	.	-	.	ID=RW-TB008_IS_58;family=IS256;cluster=IS256_128
+RW-TB008	ISEScan	terminal_inverted_repeat	3823146	3823167	.	-	.	ID=RW-TB008_IS_58_TIR;parent=RW-TB008_IS_58
+RW-TB008	ISEScan	terminal_inverted_repeat	3824631	3824652	.	-	.	ID=RW-TB008_IS_58_TIR;parent=RW-TB008_IS_58
+RW-TB008	ISEScan	insertion_sequence	3932716	3933149	.	+	.	ID=RW-TB008_IS_59;family=IS21;cluster=IS21_31|IS21||protein:plasmid:23945
+RW-TB008	ISEScan	terminal_inverted_repeat	3932716	3932738	.	+	.	ID=RW-TB008_IS_59_TIR;parent=RW-TB008_IS_59
+RW-TB008	ISEScan	terminal_inverted_repeat	3933128	3933149	.	+	.	ID=RW-TB008_IS_59_TIR;parent=RW-TB008_IS_59
+RW-TB008	ISEScan	insertion_sequence	4042988	4045105	.	+	.	ID=RW-TB008_IS_60;family=IS21;cluster=IS21_146
+RW-TB008	ISEScan	terminal_inverted_repeat	4042988	4043036	.	+	.	ID=RW-TB008_IS_60_TIR;parent=RW-TB008_IS_60
+RW-TB008	ISEScan	terminal_inverted_repeat	4045057	4045105	.	+	.	ID=RW-TB008_IS_60_TIR;parent=RW-TB008_IS_60
+RW-TB008	ISEScan	insertion_sequence	4045134	4046488	.		.	ID=RW-TB008_IS_61;family=IS3;cluster=IS3_168
+RW-TB008	ISEScan	insertion_sequence	4047144	4048559	.	-	.	ID=RW-TB008_IS_62;family=IS256;cluster=IS256_128
+RW-TB008	ISEScan	terminal_inverted_repeat	4047144	4047187	.	-	.	ID=RW-TB008_IS_62_TIR;parent=RW-TB008_IS_62
+RW-TB008	ISEScan	terminal_inverted_repeat	4048516	4048559	.	-	.	ID=RW-TB008_IS_62_TIR;parent=RW-TB008_IS_62
+RW-TB008	ISEScan	insertion_sequence	4184201	4184944	.	-	.	ID=RW-TB008_IS_63;family=IS481;cluster=IS481_77|IS481||protein:plasmid:142246
+RW-TB008	ISEScan	terminal_inverted_repeat	4184201	4184221	.	-	.	ID=RW-TB008_IS_63_TIR;parent=RW-TB008_IS_63
+RW-TB008	ISEScan	terminal_inverted_repeat	4184924	4184944	.	-	.	ID=RW-TB008_IS_63_TIR;parent=RW-TB008_IS_63
+RW-TB008	ISEScan	insertion_sequence	4221092	4222567	.	+	.	ID=RW-TB008_IS_64;family=ISL3;cluster=ISL3_143|ISL3||protein:plasmid:23974
+RW-TB008	ISEScan	terminal_inverted_repeat	4221092	4221114	.	+	.	ID=RW-TB008_IS_64_TIR;parent=RW-TB008_IS_64
+RW-TB008	ISEScan	terminal_inverted_repeat	4222546	4222567	.	+	.	ID=RW-TB008_IS_64_TIR;parent=RW-TB008_IS_64
+RW-TB008	ISEScan	insertion_sequence	4269761	4271565	.	-	.	ID=RW-TB008_IS_65;family=IS200/IS605;cluster=IS200/IS605_96
+RW-TB008	ISEScan	insertion_sequence	4286557	4287833	.	+	.	ID=RW-TB008_IS_66;family=IS110;cluster=IS110_103|IS110||protein:plasmid:145871
+RW-TB008	ISEScan	terminal_inverted_repeat	4286557	4286566	.	+	.	ID=RW-TB008_IS_66_TIR;parent=RW-TB008_IS_66
+RW-TB008	ISEScan	terminal_inverted_repeat	4287824	4287833	.	+	.	ID=RW-TB008_IS_66_TIR;parent=RW-TB008_IS_66
