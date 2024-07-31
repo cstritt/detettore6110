@@ -117,6 +117,7 @@ def main():
     #%% Get reads mapping against IS6110
     
     # Map reads against IS6110
+    #sys.stderr.write('Mapping reads against IS ...\n')
     strumenti.mapreads(params.FASTQ, params.TARGETS, 'reads_vs_IS', 4, 'paf', params.tmp, k=9, m=5)
 
     # Extract partially mapping reads    
@@ -127,12 +128,15 @@ def main():
 
 
     #%% Estimate copy number from clustered anchor reads
+    #sys.stderr.write('Estimating copy number from clustered anchor reads ...\n')
+    
     clusters = strumenti.cluster_anchors(
         ['{}/anchors.5.fasta'.format(params.tmp), '{}/anchors.3.fasta'.format(params.tmp)], anchors, params)
     
     
     #%% Find insertion sites in the reference genome
-
+    #sys.stderr.write('Detecting insertion sites in the reference genome ...\n')
+    
     # Map partial hits against reference
     strumenti.mapreads(['{}/partially_mapping.fastq.gz'.format(params.tmp)], params.REF, '{}/{}'.format(params.tmp,params.OUTPREF), params.CPUS, 'sam', params.tmp)
 

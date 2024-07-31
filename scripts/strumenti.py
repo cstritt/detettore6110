@@ -240,21 +240,21 @@ def mapreads(FASTQ, REF, OUTPREF, CPUS, OUTFMT, tmp, k=15, m=40):
         return 'Error: specify output format'
     
     minimap_cmd += FASTQ
-    print(' '.join(minimap_cmd))
+    #print(' '.join(minimap_cmd))
     
     
     if OUTFMT == 'sam': # Get sorted and indexed bam file
         
-        minimap = subprocess.Popen(minimap_cmd, stdout=subprocess.PIPE)
+        minimap = subprocess.Popen(minimap_cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
         
         subprocess.check_output(
             ('samtools', 'view', '-@', CPUS, '-hu', '-o', OUTPREF + '.raw.bam'),
-            stdin=minimap.stdout)
+            stdin=minimap.stdout, stderr=subprocess.DEVNULL)
         
         minimap.wait()
         
         subprocess.check_call(
-            ('samtools', 'sort', '-@', CPUS, OUTPREF + '.raw.bam', '-o', OUTPREF + '.bam')
+            ('samtools', 'sort', '-@', CPUS, OUTPREF + '.raw.bam', '-o', OUTPREF + '.bam'), stderr=subprocess.DEVNULL
             )
     
         subprocess.check_call(
@@ -267,7 +267,7 @@ def mapreads(FASTQ, REF, OUTPREF, CPUS, OUTFMT, tmp, k=15, m=40):
         
     elif OUTFMT == 'paf':
         
-        subprocess.run(minimap_cmd)
+        subprocess.run(minimap_cmd, stderr=subprocess.DEVNULL)
     
     
 def getsplitreads(BAM, tmp, MIN_LEN=10, MAPQ=1):
@@ -1013,7 +1013,7 @@ def cluster_anchors(fasta, anchors, params):
         
         #print(' '.join(cd_hit))
         
-        subprocess.run(cd_hit, check=True)
+        subprocess.run(cd_hit, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
         #process = subprocess.Popen(cd_hit, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         #print(process.wait())
@@ -1079,7 +1079,7 @@ def assemble_cluster_consensi(clusters, params):
             # Assemble
             cap3_cmd = ['/home/cristobal/programs/CAP3/cap3', params.tmp + '/cluster.tmp.fasta']
             
-            subprocess.run(cap3_cmd, check=True)
+            subprocess.run(cap3_cmd, check=True, stderr=subprocess.DEVNULL)
             
             contigs = [seq_record.seq for seq_record in SeqIO.parse(params.tmp + '/cluster.tmp.fasta.cap.contigs', "fasta")]
             
@@ -1212,7 +1212,6 @@ def write_output(params, clusters, tmp, to_file=False, to_list=False):
         """ Support type
          
         """
-        support_type = c[1]
         SUPPORT_LEFT = len(c[2].breakpoint[0])
         SUPPORT_RIGHT = len(c[2].breakpoint[1])
         SUPPORT_TOTAL = SUPPORT_LEFT + SUPPORT_RIGHT
@@ -1259,6 +1258,8 @@ def write_output(params, clusters, tmp, to_file=False, to_list=False):
             TSD = consensus_from_bam(region, tmp +'/' + params.OUTPREF + '.bam', [20, 0])
             
         else:
+            TSD = 'NA'
+        if len(TSD) > 10:
             TSD = 'NA'
      
         outline = [
