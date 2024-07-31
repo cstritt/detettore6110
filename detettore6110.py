@@ -86,6 +86,11 @@ def get_args():
         '-l', dest='MIN_LEN',
         type=int, default=15,
         help='Minimum alignment length for splitread target hits. [15]')
+    
+    parser_settings.add_argument(
+        '-d', dest='MAX_LR_DIST',
+        type=int, default=10000,
+        help='Maximum distance between left and right splitread cluster. [10000]')
 
     parser_settings.add_argument(
         '--keep',

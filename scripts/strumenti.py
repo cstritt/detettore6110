@@ -45,6 +45,7 @@ class mise_en_place:
         # Thresholds
         self.MAPQ = args.MAPQ
         self.MIN_LEN = args.MIN_LEN
+        self.MAX_LR_DIST = args.MAX_LR_DIST
         
         # Read info
         self.readlength = int()
@@ -205,15 +206,6 @@ class TIP:
             self.te_hits[target]['aligned_positions'].update(
                 range(hit['target_start'], hit['target_end'])
                 )
-
-
-
-
-
-    
-
-
-
 
 
 #%% funzioni
@@ -1159,6 +1151,12 @@ def write_output(params, clusters, tmp, to_file=False, to_list=False):
     Add: 
         - mapQ_left, mapQ_right
         - dist L and R support
+        
+        
+    Default filters??:
+        - only insertions with support from both sides
+        - maximum distance between L and R of MAX_LR_DIST
+        - sum of anchor mapq > 0
 
     """
 
@@ -1219,6 +1217,9 @@ def write_output(params, clusters, tmp, to_file=False, to_list=False):
         SUPPORT_RIGHT = len(c[2].breakpoint[1])
         SUPPORT_TOTAL = SUPPORT_LEFT + SUPPORT_RIGHT
         
+        if SUPPORT_LEFT == 0 or SUPPORT_RIGHT == 0:
+            continue
+        
         
         """ Position
         Important part: when pooling results from many strains, insertions will count
@@ -1231,36 +1232,35 @@ def write_output(params, clusters, tmp, to_file=False, to_list=False):
         POS_LEFT = max(remove_outliers(c[2].breakpoint[0])) if SUPPORT_LEFT else 'NA'
         POS_RIGHT = min(remove_outliers(c[2].breakpoint[1])) if SUPPORT_RIGHT else 'NA'
         
-        POS = POS_LEFT if 'L' in support_type else POS_RIGHT
+        LR_DIST = POS_RIGHT - POS_LEFT
+        if LR_DIST > params.MAX_LR_DIST:
+            continue
+
+        POS = POS_LEFT + 1 # 1-based indexing!
         
-        if POS_LEFT != 'NA' and POS_RIGHT != 'NA':
-            LR_DIST = POS_RIGHT - POS_LEFT
-        else:
-            LR_DIST = 'NA'
+
             
         """ Anchor read mapping quality
         
         """
         ANCHOR_MAPQS = sum([te_hits['anchor_mapqs'][k] for k in te_hits['anchor_mapqs']])
+        if ANCHOR_MAPQS == 0:
+            continue
         
 
         """ Target site duplication:
         If splitreads overlap, extract the overlapping sequence
         """
-        if support_type == 'LR':
-        
-            position_reverse_sr = min(remove_outliers(c[2].breakpoint[1]))
+      
+        position_reverse_sr = min(remove_outliers(c[2].breakpoint[1]))
     
-            if position_reverse_sr < POS:
-                region = [CHROM, position_reverse_sr + 1, POS]
-                TSD = consensus_from_bam(region, tmp +'/' + params.OUTPREF + '.bam', [20, 30])
-                
-            else:
-                TSD = 'NA'
-     
+        if position_reverse_sr < POS:
+            region = [CHROM, position_reverse_sr + 1, POS]
+            TSD = consensus_from_bam(region, tmp +'/' + params.OUTPREF + '.bam', [20, 0])
+            
         else:
             TSD = 'NA'
-                   
+     
         outline = [
             CHROM, POS, STRAND, 
             SUPPORT_LEFT, SUPPORT_RIGHT, SUPPORT_TOTAL, ANCHOR_MAPQS,
@@ -1284,6 +1284,4 @@ def write_output(params, clusters, tmp, to_file=False, to_list=False):
         
     if to_list:
         return outlist
-    
-    
     
