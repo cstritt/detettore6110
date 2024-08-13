@@ -6,6 +6,11 @@
 A tool to detect IS6110 polymorphisms in the Mycobacterium tuberculosis complex 
 based on split reads 
 
+To do:
+    - copy number output
+    - merging of L and R clusters: large negative values
+    - 
+
 
 """
 
@@ -17,7 +22,8 @@ import os
 import shutil
 import sys
 
-from scripts import strumenti
+from scripts import insertion_sites_module
+from scripts import copy_numbers_module
 
 
 #%% Parse arguments
@@ -107,7 +113,7 @@ def get_args():
 def main():
 
     args = get_args()
-    params = strumenti.mise_en_place(args)
+    params = insertion_sites_module.mise_en_place(args)
     
     if os.path.exists(params.tmp):
         shutil.rmtree(params.tmp)
@@ -118,46 +124,51 @@ def main():
     
     # Map reads against IS6110
     #sys.stderr.write('Mapping reads against IS ...\n')
-    strumenti.mapreads(params.FASTQ, params.TARGETS, 'reads_vs_IS', 4, 'paf', params.tmp, k=9, m=5)
+    insertion_sites_module.mapreads(params.FASTQ, params.TARGETS, 'reads_vs_IS', 4, 'paf', params.tmp, k=9, m=5)
 
     # Extract partially mapping reads    
-    partially_mapping = strumenti.get_partially_mapping('{}/reads_vs_IS.paf'.format(params.tmp), params.FASTQ, args)
+    partially_mapping = insertion_sites_module.get_partially_mapping('{}/reads_vs_IS.paf'.format(params.tmp), params.FASTQ, args)
     
     # Write to fastq
-    anchors = strumenti.subset_fastq(partially_mapping, params.FASTQ, params)
+    anchors = insertion_sites_module.subset_fastq(partially_mapping, params.FASTQ, params)
 
 
     #%% Estimate copy number from clustered anchor reads
     #sys.stderr.write('Estimating copy number from clustered anchor reads ...\n')
     
-    clusters = strumenti.cluster_anchors(
+    clusters = copy_numbers_module.cluster_anchors(
         ['{}/anchors.5.fasta'.format(params.tmp), '{}/anchors.3.fasta'.format(params.tmp)], anchors, params)
     
+    copy_number = copy_numbers_module.get_copy_number(clusters, params, min_cluster_size = 10)
     
+    with open(params.OUTPREF + '.copy_number.txt', 'w') as f:
+        f.write(str(copy_number))
+
+
     #%% Find insertion sites in the reference genome
     #sys.stderr.write('Detecting insertion sites in the reference genome ...\n')
     
     # Map partial hits against reference
-    strumenti.mapreads(['{}/partially_mapping.fastq.gz'.format(params.tmp)], params.REF, '{}/{}'.format(params.tmp,params.OUTPREF), params.CPUS, 'sam', params.tmp)
+    insertion_sites_module.mapreads(['{}/partially_mapping.fastq.gz'.format(params.tmp)], params.REF, '{}/{}'.format(params.tmp,params.OUTPREF), params.CPUS, 'sam', params.tmp)
 
     # Get split reads from reference alignment
-    splitreads = strumenti.getsplitreads('{}/{}.bam'.format(params.tmp,params.OUTPREF), params.tmp, params.MIN_LEN, params.MAPQ)
+    splitreads = insertion_sites_module.getsplitreads('{}/{}.bam'.format(params.tmp,params.OUTPREF), params.tmp, params.MIN_LEN, params.MAPQ)
 
     # Map split parts against IS consensus sequences
-    hits = strumenti.ISmap('{}/softclipped.fasta'.format(params.tmp), params.TARGETS, '{}/{}'.format(params.tmp,params.OUTPREF), min_aln_len = 10, k = 9, w = 5)
+    hits = insertion_sites_module.ISmap('{}/softclipped.fasta'.format(params.tmp), params.TARGETS, '{}/{}'.format(params.tmp,params.OUTPREF), min_aln_len = 10, k = 9, w = 5)
 
 
     #%% Detect clusters of split reads
 
     # Cluster splitreads
-    split_positions = strumenti.cluster_splitreads(splitreads, hits)
+    split_positions = insertion_sites_module.cluster_splitreads(splitreads, hits)
 
     # Merge split clusters
-    clusters = strumenti.merge_clusters(split_positions, hits)
+    clusters = insertion_sites_module.merge_clusters(split_positions, hits)
 
         
     #%% Write output & clean up
-    strumenti.write_output(params, clusters, params.tmp, to_file=args.to_file) 
+    insertion_sites_module.write_output(params, clusters, params.tmp, to_file=args.to_file) 
     
     if not args.keep:
         shutil.rmtree(params.tmp)

@@ -1,2 +1,3 @@
 .spyproject
 scripts/__pycache__
+*_tmp/

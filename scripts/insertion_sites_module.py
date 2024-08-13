@@ -684,7 +684,7 @@ def cluster_splitreads(splitreads, hits, MIN_SPLIT_COV=5):
     
     
     
-def merge_clusters(split_positions, hits, TSD_MAX = 10, MAX_DIST = 100000):
+def merge_clusters(split_positions, hits, TSD_MAX = 10, MAX_DIST = 10000):
     """ Go through clusters of split reads and merge them when they point to 
     the same insertion event.
     
@@ -729,7 +729,7 @@ def merge_clusters(split_positions, hits, TSD_MAX = 10, MAX_DIST = 100000):
         te_hits, best = TE_hit_summary(reads, hits)
         
         next_pos = pos_sorted[i+1]
-        dist = next_pos[0] - pos[0]
+        dist = abs(next_pos[0] - pos[0])
         
         
         # Precise insertion with TSD
@@ -967,143 +967,6 @@ def subset_fastq(partially_mapping, FASTQ, params):
             
     return anchor_d
         
-        
-
-def cluster_anchors(fasta, anchors, params):
-    """
-    Use cd-hit to cluster anchor reads, then assemble the reads of a cluster
-    into a single sequence with CAP3.
-    
-    cd-hit parameters don't seem to greatly affect the results (word size, 
-    minimum identity ...)
-    
-
-    Parameters
-    ----------
-
-    fasta : list
-        List of two fasta files, for the 5' and the 3' anchors
-    anchors : dict
-        Dictionary with read ID as key and sequence as value, as output by
-        subset_fastq.
-
-
-    Returns
-    -------    
-    
-    A fasta file with one assembled consensus sequence for each anchor cluster.
-    
-    """
-    
-    clusters = {
-        '5' : {},
-        '3' : {}
-        }
-    
-    for f in fasta:
-        
-        side = f.split('.')[-2]
-        
-        cd_hit = [
-            'cd-hit-est',
-            '-i', f,
-            '-d', '0',
-            '-o', params.tmp + '/cd_hit_' + side,
-            '-sc', '1']
-        
-        #print(' '.join(cd_hit))
-        
-        subprocess.run(cd_hit, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-        #process = subprocess.Popen(cd_hit, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        #print(process.wait())
-        
-        
-        #output, error = process.communicate()
-        
-        
-        # Collect anchor sequences for each cluster
-        with open(params.tmp + '/cd_hit_' + side + '.clstr') as f:
-            for line in f:
-                
-                if line.startswith('>'):
-                    
-                    cluster_nr = line.strip().split(' ')[-1]
-                    clusters[side][cluster_nr] = []
-                    
-                else:
-                    read_id = line.strip().split(' ')[1][1:-3]
-                    anchor_seq = anchors[read_id]
-                    anchor_rec = SeqRecord(
-                        anchor_seq, 
-                        id=read_id,
-                        name='',
-                        description = side +'_' + cluster_nr
-                        )
-                    
-                    clusters[side][cluster_nr].append(anchor_rec)
-                    
-    return clusters
-
-
-
-def assemble_cluster_consensi(clusters, params):
-    """
-    
-    Cave: assembled sequences are often few bp short at the clipped end!
-    Better use the original reads for this. 
-    
-    Parameters
-    ----------
-    clusters : dict
-    
-    
-    
-    Returns
-    -------
-    None.
-
-    """
-        
-    # # Assemble the reads in each cluster
-    cluster_consensi = {}
-    
-    for side in clusters:
-        for cluster_nr in clusters[side]:
-            
-            cluster_id = side + '_' + cluster_nr
-            
-            with open(params.tmp + '/cluster.tmp.fasta', 'w') as fasta_handle:
-                SeqIO.write(clusters[side][cluster_nr], fasta_handle, 'fasta')
-                
-            # Assemble
-            cap3_cmd = ['/home/cristobal/programs/CAP3/cap3', params.tmp + '/cluster.tmp.fasta']
-            
-            subprocess.run(cap3_cmd, check=True, stderr=subprocess.DEVNULL)
-            
-            contigs = [seq_record.seq for seq_record in SeqIO.parse(params.tmp + '/cluster.tmp.fasta.cap.contigs', "fasta")]
-            
-            cluster_consensi[cluster_id] = contigs
-            
-        
-    with open(params.tmp + '/cluster_consensi.fasta', 'w') as f:
-           
-        for cluster_id in cluster_consensi:
-            
-            contigs = cluster_consensi[cluster_id]
-            
-            # No consensus sequence
-            if len(contigs) == 0:
-                continue
-            
-            rec = SeqRecord(contigs[0], id = cluster_id, name='', description='')
-        
-            SeqIO.write(rec, f, 'fasta')
-        
-    return cluster_consensi
-                
-   
-                
 
 def remove_known_insertions(clusters, params, imprec = 5):
 
@@ -1235,7 +1098,7 @@ def write_output(params, clusters, tmp, to_file=False, to_list=False):
         if LR_DIST > params.MAX_LR_DIST:
             continue
 
-        POS = POS_LEFT + 1 # 1-based indexing!
+        POS = POS_LEFT  # The right-most base of the left cluster (5' strand) is considered the insertion site
         
 
             
