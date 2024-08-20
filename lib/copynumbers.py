@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-
 """ Module to estimate IS copy numbers from split read clusters, without
 mapping to reference
 
@@ -9,10 +8,6 @@ Approach:
     - cluster anchor read parts with cd-hit-est, separately for 5' and 3' side
     - CN = min(len(n_clusters_left), len(n_clusters_right))
     
-
-Created on Tue Aug 13 10:09:54 2024
-
-@author: cristobal
 """
 
 import subprocess
@@ -21,7 +16,7 @@ from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 
 
-def cluster_anchors(fasta, anchors, params):
+def cluster_anchors(fasta, anchors, outpath):
     """
     Use cd-hit to cluster anchor reads, then assemble the reads of a cluster
     into a single sequence with CAP3.
@@ -60,22 +55,13 @@ def cluster_anchors(fasta, anchors, params):
             'cd-hit-est',
             '-i', f,
             '-d', '0',
-            '-o', params.tmp + '/cd_hit_' + side,
+            '-o', f'{outpath}/cd_hit_{side}',
             '-sc', '1']
         
-        #print(' '.join(cd_hit))
-        
         subprocess.run(cd_hit, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-        #process = subprocess.Popen(cd_hit, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        #print(process.wait())
-        
-        
-        #output, error = process.communicate()
-        
         
         # Collect anchor sequences for each cluster
-        with open(params.tmp + '/cd_hit_' + side + '.clstr') as f:
+        with open(f'{outpath}/cd_hit_{side}.clstr') as f:
             for line in f:
                 
                 if line.startswith('>'):
@@ -99,7 +85,7 @@ def cluster_anchors(fasta, anchors, params):
 
 
 
-def get_copy_number(clusters, params, min_cluster_size = 10):
+def get_copy_number(clusters, min_cluster_size = 10):
     """ 
 
     Parameters
@@ -113,7 +99,8 @@ def get_copy_number(clusters, params, min_cluster_size = 10):
 
     Returns
     -------
-    None.
+    copy_number : int
+        IS copy number.
 
     """
     
@@ -133,15 +120,15 @@ def get_copy_number(clusters, params, min_cluster_size = 10):
     
     
 def assemble_cluster_consensi(clusters, params):
-    """
+    """ Use cap3 to assemble the reads of a cluster into a consensus sequence.
     
-    Cave: assembled sequences are often few bp short at the clipped end!
-    Better use the original reads for this. 
+    Cave: assembled sequences are often few bp short at the clipped end! So
+    better map the original reads.
+
     
     Parameters
     ----------
     clusters : dict
-    
     
     
     Returns
