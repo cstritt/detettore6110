@@ -145,9 +145,10 @@ def main():
 
         
     # Write output & clean up #################################################
+    # (only the mapq filter works properly at the moment!)
     
     io.write_output(args, clusters, copy_number, temp_dir, 
-                    both_sides=True, require_tsd=False, mapq_filt=False) 
+                    both_sides=True, require_tsd=True, mapq_filt=False) 
     
     if args.keep:  # Copy contents of temporary to working directory
         shutil.copytree(temp_dir, os.path.join(working_dir, os.path.basename(temp_dir)))

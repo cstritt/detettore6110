@@ -20,3 +20,5 @@ detettore6110.py reads_1.fq.gz reads_2.fq.gz
 
 ## Output
 The first line of the output, starting with #CN, is the IS copy number estimated independently of the reference. This is followed by a header and the table containing the IS insertion sites relative to the reference genome. 
+
+At present **only clear split read insertion signatures** are reported. This means that the reference-independent copy number estimate is usually higher than the number of inferred insertion sites, as insertions into complex regions (repeats, SVs, ...) tend to produce more complicated and ambiguous signatures (or none at all). 

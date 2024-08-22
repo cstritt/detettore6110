@@ -17,6 +17,9 @@ def write_output(args, clusters, copy_number, outpath,
                  both_sides=True, require_tsd=True, mapq_filt=False):
     """ Write detettore6110 output, including copy number and 
     insertion sites. 
+    
+    Bug when required_tsd=False:
+        still tries to get tsd, running into position error when start > end
            
         
     Parameters
