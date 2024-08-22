@@ -14,12 +14,14 @@ from collections import Counter
 
 
 def write_output(args, clusters, copy_number, outpath, 
-                 both_sides=True, require_tsd=True, mapq_filt=False):
+                 both_sides=True, require_tsd=True, mapq_filt=True):
     """ Write detettore6110 output, including copy number and 
     insertion sites. 
     
-    Bug when required_tsd=False:
-        still tries to get tsd, running into position error when start > end
+    (Only the mapq filter works properly at the moment! All other need to
+    be set to true. Maybe implement less stringent filtering and allow
+    less clear-cut insertion signatures, with separated or single cluster
+    support.)
            
         
     Parameters
