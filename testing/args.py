@@ -11,8 +11,9 @@ class args:
     
     def __init__(self):
         
-        self.fastq = ['/home/cristobal/TB/projects/detettoreTB/NOTEBOOKS/C_detettore/reads/H37Rv1.MSv3_RL250_COV50_1.fq.gz', 
-                      '/home/cristobal/TB/projects/detettoreTB/NOTEBOOKS/C_detettore/reads/H37Rv1.MSv3_RL250_COV50_2.fq.gz']
+        self.fastq = [
+            '/home/cristobal/TB/projects/detettoreTB/NOTEBOOKS/C_detettore/reads/CCDC5180.HS20_RL100_COV40_1.fq.gz', 
+            '/home/cristobal/TB/projects/detettoreTB/NOTEBOOKS/C_detettore/reads/CCDC5180.HS20_RL100_COV40_2.fq.gz']
         self.outfile = False
         self.ref = 'resources/reference/MTBC0_v1.1.fasta'
         self.target = 'resources/is_targets/IS6110.fasta'
@@ -22,6 +23,6 @@ class args:
         self.min_split_len = 15
         self.max_tsd_len = 10
         self.min_cl_len = 10
-        self.keep = True
+        self.keep = False
         
 args = args()

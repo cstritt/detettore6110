@@ -162,7 +162,7 @@ def get_partially_mapping(paf, min_anchor_len=20):
     return partial
 
         
-def getsplitreads(bam, outpath, min_len=10, mapq=1):
+def getsplitreads(bam, outpath, min_split_len=15, mapq=1):
     """ Extract splitreads and write split parts to fasta file.
     
 
@@ -212,7 +212,7 @@ def getsplitreads(bam, outpath, min_len=10, mapq=1):
             else:
                 continue
             
-            if cliplen < min_len:
+            if cliplen < min_split_len:
                 continue
             
             if read.mapping_quality < mapq:
@@ -278,7 +278,11 @@ def clip_seq(seq, cigar):
 def subset_fastq(partially_mapping, FASTQ, outpath):
     """
     Extract the partially mapping reads from the original fastq. 
-
+    
+    Modify: first subset with seqtk (much faster!), then create fasta with 
+    anchor sequences
+    
+    
     Parameters
     ----------
     partially_mapping : dict
@@ -299,6 +303,18 @@ def subset_fastq(partially_mapping, FASTQ, outpath):
     to outpath.
 
     """
+    
+    # Write read IDs to file
+    # with open(f'{outpath}/partially_mapping.readIDs.txt', 'w') as f:
+    #     for readid in partially_mapping:
+    #         f.write(readid + '\n')
+            
+    # # Subset fastqs
+    # for f in FASTQ:
+    #     subprocess.run(
+    #         ('seqtk', 'subseq', f, f'{outpath}/partially_mapping.readIDs.txt'),
+    #         check=True
+    #         )
     
     fastq_out = []
 

@@ -52,7 +52,7 @@ def get_args():
     
     parser_settings.add_argument(
         '-l', dest='min_split_len',
-        type=int, default=10,
+        type=int, default=15,
         help='Minimum alignment length for splitread target hits. [10]')
     
     parser_settings.add_argument(
@@ -98,7 +98,7 @@ def main():
     
     # Map reads against IS6110
     readparsing.mapreads(
-        fastqs, target, 'reads_vs_IS', temp_dir, 'paf', args.cpus, k=9)
+        fastqs, target, 'reads_vs_IS', temp_dir, 'paf', args.cpus, k=9, m=10)
 
     # Extract partially mapping reads    
     partially_mapping = readparsing.get_partially_mapping(f'{temp_dir}/reads_vs_IS.paf')
@@ -120,7 +120,7 @@ def main():
     # Map partially mapping reads against reference
     readparsing.mapreads(
         [f'{temp_dir}/partially_mapping.fastq.gz'], reference, 
-        'reads_vs_ref', temp_dir, 'bam', args.cpus)
+        'reads_vs_ref', temp_dir, 'bam', args.cpus, k=9, m=10)
 
     # Get split reads from reference alignment
     splitreads = readparsing.getsplitreads(
@@ -130,7 +130,7 @@ def main():
     # Map split parts against IS consensus sequences
     readparsing.mapreads(
         [f'{temp_dir}/softclipped.fasta'], target, 'softclipped_vs_IS', 
-        temp_dir, 'paf', args.cpus, k=9)
+        temp_dir, 'paf', args.cpus, k=9, m=10)
     
     hits = insertionsites.parse_paf(f'{temp_dir}/softclipped_vs_IS.paf', args.min_split_len)
 
