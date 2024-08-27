@@ -5,13 +5,102 @@
 
 """
 
+import bisect
 import sys
 import numpy
+import pandas
 import pysam
+import re
+
 
 from Bio import SeqIO
 from collections import Counter
 
+
+def gene_overlap(position, annotation):
+    """  Given a genomic position, return the genomic context as given by 
+    a gff annotation. Uses regex to extract strings after gene= and locus_tag=
+    
+    Issue:
+        - in the h37rv annotation features can be two indices apart
+        - for some features no regex is found
+    
+    
+    Parameters
+    ----------
+    positions : DataFrame
+        Pandas data frame containing the gff annotation.
+    annotation : str
+        Path to annotation file in gff format.
+
+    Returns
+    -------
+    A list with one element for each position, containing the gene name 
+    and the distance to the gene. If the position is in a gene, this is one
+    name and distance 0; if the position is between genes, this is two genes 
+    and two distances separated by ;   
+
+    """
+    
+    regex_patterns = [
+        r";gene=([^;\n]+)", 
+        r"locus_tag=([^;\n]+)", 
+        r"mobile_element_type=([^;\n]+)"
+        ]
+    
+    # Find the closest intervals on either side of each position
+    idx_s = bisect.bisect_right(annotation['start'], position)
+    idx_e = bisect.bisect_right(annotation['end'], position)
+    
+    # Overlapping feature
+    if idx_e == idx_s - 1:
+                
+        gene_info = gene_id_regex(
+            regex_patterns, annotation['attributes'][idx_e])
+        
+        return [gene_info, '0']
+                                
+    # Inbetween features
+    elif idx_s == idx_e:
+        
+        gene_info_5 = gene_id_regex(
+            regex_patterns, annotation['attributes'][idx_s - 1])
+        
+        dist_to_5 = position - annotation['end'][idx_s - 1]
+        
+        gene_info_3 = gene_id_regex(
+            regex_patterns, annotation['attributes'][idx_s])
+        
+        dist_to_3 = annotation['start'][idx_s] - position
+        
+        return [f'{gene_info_5};{gene_info_3}', f'{dist_to_5};{dist_to_3}']
+        
+
+def gene_id_regex(patterns, gff_attributes):
+    """ Extract gene name and locus tag (or any pattern) from the
+    atrribute column of a gff
+    
+    Parameters
+    ----------
+    patterns : list
+        List containing regex patterns to extract.
+    gff_attributes : str
+        Single gff attribute entry.
+
+    Returns
+    -------
+    out : str
+        Matches separated by a comma.
+
+    """
+    
+    for pattern in patterns:
+        match = re.search(pattern, gff_attributes)
+        if match:
+            return match.group(1)
+        
+
+    
 
 def write_output(args, clusters, copy_number, outpath, 
                  both_sides=True, require_tsd=True, mapq_filt=True):
@@ -59,11 +148,23 @@ def write_output(args, clusters, copy_number, outpath,
         
         'support_L', 'support_R', 'mean_mapq',
         
-        'TSD', 'position_L', 'position_R', 
+        'TSD', 'position_L', 'position_R' 
     
-        'IS_start', 'IS_end'
+        #'IS_start', 'IS_end'
         
         ]
+    
+    # If an annotation is provided, load it and add gene information to output
+    if args.annot:
+        header += ['gene', 'dist_to_gene']
+        
+        annot = pandas.read_csv(
+            args.annot, sep='\t', comment='#', 
+            names=['seqid', 'source', 'type', 'start', 'end','score', 'strand', 'phase','attributes'])
+        
+        # Remove CDS entries
+        annot = annot[annot['type'].isin(['gene', 'pseudogene', 'mobile_genetic_element'])]
+        annot = annot.reset_index(drop=True)
     
     headerstr = '\t'.join(header)
     firstlines = f'#CN {copy_number}\n{headerstr}\n'
@@ -88,13 +189,13 @@ def write_output(args, clusters, copy_number, outpath,
         is_name = list(c[2].te_hits.keys())[0]
         te_hits = c[2].te_hits[is_name]
         
-        TE_L_START = min(te_hits['aligned_positions_left'])
-        TE_L_END = max(te_hits['aligned_positions_left'])
-        TE_START = f'{TE_L_START},{TE_L_END}'
+        #TE_L_START = min(te_hits['aligned_positions_left'])
+        #TE_L_END = max(te_hits['aligned_positions_left'])
+        #TE_START = f'{TE_L_START}-{TE_L_END}'
         
-        TE_R_START = min(te_hits['aligned_positions_right'])
-        TE_R_END = max(te_hits['aligned_positions_right'])
-        TE_END = f'{TE_R_START}, {TE_R_END}'
+        #TE_R_START = min(te_hits['aligned_positions_right'])
+        #TE_R_END = max(te_hits['aligned_positions_right'])
+        #TE_END = f'{TE_R_START}-{TE_R_END}'
         
         STRAND = '+' if te_hits['strand']['+'] > te_hits['strand']['-'] else '-'
         
@@ -124,17 +225,26 @@ def write_output(args, clusters, copy_number, outpath,
         # Target site duplication
         region = [CHROM, POS_RIGHT + 1, POS_LEFT]
         TSD = consensus_from_bam(region, f'{outpath}/reads_vs_ref.bam')
-    
-
+        
+        
         # Write output
         outline = [
             CHROM, POS, STRAND, 
             SUPPORT_LEFT, SUPPORT_RIGHT, MEAN_MAPQ,
-            TSD, POS_LEFT, POS_RIGHT, 
-            TE_START, TE_END
-                   ]        
-        outline = map(str, outline)
+            TSD, POS_LEFT, POS_RIGHT 
+            #TE_START, TE_END
+            ]
         
+        # Add gene information
+        if args.annot:
+            gene_info = gene_overlap(POS, annot)
+            try:
+                outline += gene_info
+            except TypeError:
+                print(POS)
+
+        outline = map(str, outline)
+
         if args.outfile:
             outhandle.write('\t'.join(outline) + '\n')
         

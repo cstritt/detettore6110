@@ -17,7 +17,7 @@ def get_args():
 
     parser = argparse.ArgumentParser(
         description='A tool to infer IS6110 copy numbers and insertion sites \
-        from short-read sequencing data.')
+        from short-read sequencing data. Default values in [].')
 
     parser_input = parser.add_argument_group('INPUT / OUTPUT')
     parser_settings = parser.add_argument_group('PROGRAM SETTINGS')
@@ -39,6 +39,10 @@ def get_args():
         default=os.path.join(path_to_detettore,'resources/is_targets/IS6110.fasta'),
         help='IS consensus sequence in fasta format. [resources/is_targets/IS6110.fasta]')
     
+    parser_input.add_argument(
+        "-a", dest="annot",
+        default=os.path.join(path_to_detettore, 'resources/reference/MTBC0v1.1_PGAP_annot.gff'),
+        help='Gene annotation in gff format. [resources/reference/MTBC0v1.1_PGAP_annot.gff]')
     
     # OTHER SETTINGS
     parser_input.add_argument(
@@ -145,7 +149,7 @@ def main():
 
         
     # Write output & clean up #################################################
-    io.write_output(args, clusters, copy_number, temp_dir) 
+    io.write_output(args, clusters, copy_number, temp_dir)
     
     if args.keep:  # Copy contents of temporary to working directory
         shutil.copytree(temp_dir, os.path.join(working_dir, os.path.basename(temp_dir)))

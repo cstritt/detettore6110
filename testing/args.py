@@ -26,3 +26,26 @@ class args:
         self.keep = False
         
 args = args()
+
+#%%
+class args:
+    
+    def __init__(self):
+        
+        self.fastq = [
+            '/home/cristobal/TB/projects/detettoreTB/NOTEBOOKS/C_detettore/reads/CCDC5180.HS20_RL100_COV40_1.fq.gz', 
+            '/home/cristobal/TB/projects/detettoreTB/NOTEBOOKS/C_detettore/reads/CCDC5180.HS20_RL100_COV40_2.fq.gz']
+        self.outfile = False
+        self.ref = 'resources/reference/H37Rv.fasta'
+        self.target = 'resources/is_targets/IS6110.fasta'
+        #self.annot = 'resources/reference/H37Rv.RefSeq_annot.gff'
+        self.annot= False
+        self.cpus = 4 
+        self.mapq = 0
+        self.min_split_len = 15
+        self.max_tsd_len = 10
+        self.min_cl_len = 10
+        self.keep = False
+        
+args = args()
+
