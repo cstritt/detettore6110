@@ -3,3 +3,6 @@ lib/__pycache__
 *_tmp/
 to_do.md
 .gitignore
+testing/.ipynb_checkpoints/testing-checkpoint.ipynb
+testing/some_reads.bam
+testing/some_reads.bam.bai

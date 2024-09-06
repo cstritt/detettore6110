@@ -26,8 +26,8 @@ def get_args():
     
     # INPUT/OUTPUT
     parser_input.add_argument(
-        'fastq', nargs = '+',
-        help='Short reads in fastq format. One file for SE, two files separated by space for PE.')
+        'reads', nargs='+',
+        help='Short reads in fasta/fastq/bam. One file for SE, two files separated by space for PE.')
 
     parser_input.add_argument(
         "-r", dest="ref",
@@ -94,21 +94,30 @@ def main():
     working_dir = os.getcwd()    
     temp_dir = tempfile.mkdtemp()
     
-    fastqs = [os.path.abspath(x) for x in args.fastq]
+    reads = [os.path.abspath(x) for x in args.reads]
     target = os.path.abspath(args.target)
     reference = os.path.abspath(args.ref)
+    
+    # Convert input bam/cram to fastq
+    read_suffix = set([x.split('.')[-1] for x in reads]).pop()
+    
+    if len(reads) == 1 and read_suffix in ['bam', 'cram', 'sam']:
 
+        bamfile = reads[0]        
+        reads = [readparsing.bam_to_fastq(bamfile, f'{temp_dir}/reads.fastq.gz')]
+        
+    
     # Get reads mapping against IS6110 ########################################
     
     # Map reads against IS6110
     readparsing.mapreads(
-        fastqs, target, 'reads_vs_IS', temp_dir, 'paf', args.cpus, k=9, m=10)
+        reads, target, 'reads_vs_IS', temp_dir, 'paf', args.cpus, k=9, m=10)
 
     # Extract partially mapping reads    
     partially_mapping = readparsing.get_partially_mapping(f'{temp_dir}/reads_vs_IS.paf')
     
     # Write to fastq
-    anchors = readparsing.subset_fastq(partially_mapping, fastqs, temp_dir)
+    anchors = readparsing.subset_fastq(partially_mapping, reads, temp_dir)
 
 
     # Estimate copy number from clustered anchor reads ########################

@@ -11,9 +11,9 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
 
-def mapreads(fastq, ref, outpref, outpath, outfmt, cpus=1, k=15, m=40):   
+def mapreads(fastq, ref, outpref, outpath, outfmt, cpus=1, k=15, m=40):
     """ Map Illumina reads against a reference. 
-    
+
     Parameters
     ----------
     fastq : list
@@ -26,7 +26,7 @@ def mapreads(fastq, ref, outpref, outpath, outfmt, cpus=1, k=15, m=40):
         Path to output folder.    
     outfmt : str
         Output format, either paf or bam.
-        
+
     cpus : int, optional
         Number of CPUs. The default is 1.
     k : int, optional
@@ -38,56 +38,55 @@ def mapreads(fastq, ref, outpref, outpath, outfmt, cpus=1, k=15, m=40):
     -------
     A paf or bam file with mapped reads, located in tmp/
 
-    
+
     """
-    
-    cpus = str(cpus)    
-    
+
+    cpus = str(cpus)
+
     if outfmt == 'bam':
-        
-        minimap_cmd =  [
+  
+        minimap_cmd = [
             'minimap2', '-a', '-x', 'sr', '-Y','-t', cpus, '-k', str(k), '-m', str(m), ref
         ]
-    
+
     elif outfmt == 'paf':
-        
-        minimap_cmd =  [
+  
+        minimap_cmd = [
             'minimap2', '-x', 'sr', '-c', '-o', f'{outpath}/{outpref}.paf', '-Y','-t', cpus, '-k', str(k), '-m', str(m), ref
         ]
 
     else:
         return 'Error: specify output format'
-    
+
     minimap_cmd += fastq
-    
-    
+
     if outfmt == 'bam':  # Get sorted and indexed bam file
-        
+
         minimap = subprocess.Popen(minimap_cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-        
+
         subprocess.check_output(
             ('samtools', 'view', '-@', cpus, '-hu', '-o', f'{outpath}/{outpref}.raw.bam'),
             stdin=minimap.stdout, stderr=subprocess.DEVNULL)
-        
+
         minimap.wait()
-        
+
         subprocess.check_call(
             ('samtools', 'sort', '-@', cpus, f'{outpath}/{outpref}.raw.bam', '-o', f'{outpath}/{outpref}.bam'), stderr=subprocess.DEVNULL
             )
-    
+
         subprocess.check_call(
             ("samtools", "index", f'{outpath}/{outpref}.bam')
             )
-        
+
         subprocess.check_output(
             ('rm', f'{outpath}/{outpref}.raw.bam')
             )
-        
+
     elif outfmt == 'paf':
-        
+
         subprocess.run(minimap_cmd, stderr=subprocess.DEVNULL)
-        
-        
+
+
 
 def get_partially_mapping(paf, min_anchor_len=20):
     """ 
@@ -316,6 +315,8 @@ def subset_fastq(partially_mapping, FASTQ, outpath):
     #         check=True
     #         )
     
+    # Merge into one file
+    
     fastq_out = []
 
     fasta_out = {
@@ -359,4 +360,32 @@ def subset_fastq(partially_mapping, FASTQ, outpath):
             SeqIO.write(fasta_out[side], fasta_handle, 'fasta')
             
     return anchor_d
-        
+
+
+def bam_to_fastq(bamfile, outpath):
+    """
+    Convert bam/cram to fastq using samtools
+
+    -o option requires samtools 1.11!
+
+    Parameters
+    ----------
+    bamfile : str
+        Path to bam/cram file.
+
+    Returns
+    -------
+    Writes fastq to outpath.
+
+    """
+
+    samtools_cmd = ('samtools', 'fastq', '-0', outpath, bamfile)
+
+    # Create a gzip process and pipe the output to it
+    with open(outpath, "wb") as f:
+        subprocess.run(samtools_cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL).stdout
+        p = subprocess.Popen(["gzip"], stdin=subprocess.PIPE, stdout=f, stderr=subprocess.DEVNULL)
+        p.communicate(subprocess.run(samtools_cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL).stdout)
+
+    return outpath
+

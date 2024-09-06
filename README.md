@@ -3,9 +3,16 @@
 First running version for testing with different coverages and read lengths.
 
 ## Install
+Clone the repository
+```{bash}
+git clone https://github.com/cstritt/detettore6110
+```
+
 Create a conda environment with the required Python packages.
 
 ```{bash}
+cd detettore6110
+
 conda env create -f environment.yaml -n detettore6110
 ```
 
