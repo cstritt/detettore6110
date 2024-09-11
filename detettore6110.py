@@ -2,7 +2,9 @@
 # -*- coding: utf-8 -*-
 
 
+
 import argparse
+import atexit
 import os 
 import shutil
 import tempfile
@@ -98,6 +100,7 @@ def main():
     
     working_dir = os.getcwd()    
     temp_dir = tempfile.mkdtemp()
+    atexit.register(io.exit_handler, args, temp_dir, working_dir)
     
     reads = [os.path.abspath(x) for x in args.reads]
     target = os.path.abspath(args.target)
@@ -122,8 +125,8 @@ def main():
     partially_mapping = readparsing.get_partially_mapping(f'{temp_dir}/reads_vs_IS.paf')
     
     # Write to fastq
-    anchors = readparsing.subset_fastq(partially_mapping, reads, temp_dir)
-
+    readparsing.subset_fastq(partially_mapping, reads, temp_dir)
+    anchors = readparsing.write_anchor_sequences(f"{temp_dir}/partially_mapping.fastq.gz", partially_mapping, temp_dir)
 
     # Estimate copy number from clustered anchor reads ########################
     anchor_clusters = copynumbers.cluster_anchors(
@@ -161,16 +164,10 @@ def main():
     # Merge split clusters
     clusters = insertionsites.merge_clusters(split_positions, hits)
 
-        
+
     # Write output & clean up #################################################
     io.write_output(args, clusters, copy_number, temp_dir)
     
-    if args.keep:  # Copy contents of temporary to working directory
-        shutil.copytree(temp_dir, os.path.join(working_dir, os.path.basename(temp_dir)))
-        
-    shutil.rmtree(temp_dir)
-
-
 if __name__ == '__main__':
     main()
 
