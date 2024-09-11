@@ -326,7 +326,7 @@ def subset_fastq(partially_mapping, FASTQ, outpath):
     
     anchor_d = {}
     
-    for f in FASTQ: 
+    for f in FASTQ:
         
         with gzip.open(f, "rt") as fastq_handle:
         
@@ -379,7 +379,7 @@ def bam_to_fastq(bamfile, outpath):
 
     """
 
-    samtools_cmd = ('samtools', 'fastq', '-0', outpath, bamfile)
+    samtools_cmd = ('samtools', 'fastq', bamfile)
 
     # Create a gzip process and pipe the output to it
     with open(outpath, "wb") as f:

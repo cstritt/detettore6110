@@ -11,7 +11,7 @@ class args:
     
     def __init__(self):
         
-        self.fastq = [
+        self.reads = [
             '/home/cristobal/TB/projects/detettoreTB/NOTEBOOKS/C_detettore/reads/CCDC5180.HS20_RL100_COV40_1.fq.gz', 
             '/home/cristobal/TB/projects/detettoreTB/NOTEBOOKS/C_detettore/reads/CCDC5180.HS20_RL100_COV40_2.fq.gz']
         self.outfile = False
@@ -32,7 +32,7 @@ class args:
     
     def __init__(self):
         
-        self.fastq = [
+        self.reads = [
             '/home/cristobal/TB/projects/detettoreTB/NOTEBOOKS/C_detettore/reads/CCDC5180.HS20_RL100_COV40_1.fq.gz', 
             '/home/cristobal/TB/projects/detettoreTB/NOTEBOOKS/C_detettore/reads/CCDC5180.HS20_RL100_COV40_2.fq.gz']
         self.outfile = False
@@ -48,4 +48,6 @@ class args:
         self.keep = False
         
 args = args()
+
+#%% bam input
 

@@ -55,6 +55,7 @@ def cluster_anchors(fasta, anchors, outpath):
             'cd-hit-est',
             '-i', f,
             '-d', '0',
+            '-c', '0.99',
             '-o', f'{outpath}/cd_hit_{side}',
             '-sc', '1']
         
@@ -85,8 +86,8 @@ def cluster_anchors(fasta, anchors, outpath):
 
 
 
-def get_copy_number(clusters, min_cluster_size = 10):
-    """ 
+def get_copy_number(clusters, min_cluster_size=10):
+    """
 
     Parameters
     ----------
@@ -103,10 +104,10 @@ def get_copy_number(clusters, min_cluster_size = 10):
         IS copy number.
 
     """
-    
+
     n_clusters = {
         }
-    
+
     for side in clusters:
         n_clusters[side] = 0
         for cl in clusters[side]:
@@ -114,16 +115,17 @@ def get_copy_number(clusters, min_cluster_size = 10):
                 continue
             n_clusters[side] += 1
 
-    
     copy_number = min([n_clusters['5'], n_clusters['3']])
     return copy_number
-    
-    
+
+
 def assemble_cluster_consensi(clusters, params):
     """ Use cap3 to assemble the reads of a cluster into a consensus sequence.
     
     Cave: assembled sequences are often few bp short at the clipped end! So
     better map the original reads.
+    
+    Better: use mafft to align!
 
     
     Parameters

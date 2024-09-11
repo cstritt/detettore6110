@@ -16,7 +16,7 @@ from lib import readparsing
 def get_args():
 
     parser = argparse.ArgumentParser(
-        description='A tool to infer IS6110 copy numbers and insertion sites \
+        description='A tool to infer IS copy numbers and insertion sites \
         from short-read sequencing data. Default values in [].')
 
     parser_input = parser.add_argument_group('INPUT / OUTPUT')
@@ -69,7 +69,12 @@ def get_args():
         type=int, default=10,
         help='Minimum number of anchor reads that have to cluster in order \
             to be counted in the copy number estimation [10]')
-
+            
+    parser_settings.add_argument(
+        '-id', dest="min_perc_id",
+        type=int, default=95,
+        help='Minimum percentage identity for reads mapping against IS. [95]')
+            
     parser_settings.add_argument(
             '-c', dest='cpus',
             type= int, default=4,
