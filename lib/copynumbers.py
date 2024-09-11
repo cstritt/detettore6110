@@ -55,7 +55,7 @@ def cluster_anchors(fasta, anchors, outpath):
             'cd-hit-est',
             '-i', f,
             '-d', '0',
-            '-c', '0.99',
+            '-c', '0.95',
             '-o', f'{outpath}/cd_hit_{side}',
             '-sc', '1']
         
