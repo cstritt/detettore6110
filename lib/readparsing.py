@@ -304,21 +304,65 @@ def subset_fastq(partially_mapping, FASTQ, outpath):
     """
     
     # Write read IDs to file
-    # with open(f'{outpath}/partially_mapping.readIDs.txt', 'w') as f:
-    #     for readid in partially_mapping:
-    #         f.write(readid + '\n')
+    read_ids = f'{outpath}/partially_mapping.readIDs.txt'
+    with open(read_ids, 'w') as f:
+        for readid in partially_mapping:
+            f.write(readid + '\n')
             
-    # # Subset fastqs
-    # for f in FASTQ:
-    #     subprocess.run(
-    #         ('seqtk', 'subseq', f, f'{outpath}/partially_mapping.readIDs.txt'),
-    #         check=True
-    #         )
-    
-    # Merge into one file
-    
-    fastq_out = []
+    # PE reads
+    if len(FASTQ) == 2:
+        
+        # Subsample the forward reads
+        forward_subset = f"{outpath}/subsampled_forward.fastq"
+        subprocess.run([
+            "seqtk", "subseq", FASTQ[0], read_ids
+        ], check=True, stdout=open(forward_subset, "w"))
 
+        # Subsample the reverse reads
+        reverse_subset = f"{outpath}/subsampled_reverse.fastq"
+        subprocess.run([
+            "seqtk", "subseq", FASTQ[1], read_ids
+        ], check=True, stdout=open(reverse_subset, "w"))
+
+        # Merge the subsampled reads
+        merged_fastq = f"{outpath}/partially_mapping.fastq"
+        subprocess.run([
+            "cat",  forward_subset, reverse_subset
+        ], check=True, stdout=open(merged_fastq, "w"))
+    
+    # SE reads
+    elif len(FASTQ) == 1:
+        se_subset = f"{outpath}/partially_mapping.fastq"
+        subprocess.run([
+            "seqtk", "subseq", FASTQ[0], read_ids
+        ], check=True, stdout=open(se_subset, "w"))
+        
+    # Compress
+    subprocess.run([
+        "gzip", "-f", f"{outpath}/partially_mapping.fastq"
+        ], check=True, stdout=open(f"{outpath}/partially_mapping.fastq.gz", "wb"))
+        
+                
+def write_anchor_sequences(FASTQ, partially_mapping, outpath):
+    """
+    Write the anchor sequences to fasta file.
+
+    Parameters
+    ----------
+    FASTQ : str
+        Path to fastq file. This is a single file resulting form subset_fastq above.
+    partially_mapping : dict
+        Dictionary with read IDs as keys and the side, start and end coordinates
+        of the anchor as values.
+    outpath : str
+        Path to output folder.
+
+    Returns
+    -------
+    anchor_d : dict
+        Dictionary with read IDs as keys and anchor sequences as values.
+
+    """
     fasta_out = {
         '5' : [],
         '3' : []
@@ -326,39 +370,32 @@ def subset_fastq(partially_mapping, FASTQ, outpath):
     
     anchor_d = {}
     
-    for f in FASTQ:
-        
-        with gzip.open(f, "rt") as fastq_handle:
-        
-            for read in SeqIO.parse(fastq_handle, "fastq"):
-                
-                if read.id in partially_mapping:
-                    
-                    fastq_out.append(read)
-                    
-                    side = partially_mapping[read.id][0]
-                    
-                    anchor_start = partially_mapping[read.id][1]
-                    anchor_end = partially_mapping[read.id][2]
-                    anchor_seq = read.seq[anchor_start:anchor_end]
-                    
-                    fasta_rec = SeqRecord(
-                        anchor_seq,
-                        id=read.id,
-                        name = read.id,
-                        description=side + '_' + str(anchor_start) + '-' + str(anchor_end)
-                        )
-
-                    fasta_out[side].append(fasta_rec)
-                    anchor_d[read.id] = anchor_seq
-             
-    with gzip.open(f'{outpath}/partially_mapping.fastq.gz', 'wt') as fastq_handle:
-        SeqIO.write(fastq_out, fastq_handle, 'fastq')
+    with gzip.open(FASTQ, "rt") as fastq_handle:
     
+        for read in SeqIO.parse(fastq_handle, "fastq"):
+            
+            if read.id in partially_mapping:
+                
+                side = partially_mapping[read.id][0]
+                
+                anchor_start = partially_mapping[read.id][1]
+                anchor_end = partially_mapping[read.id][2]
+                anchor_seq = read.seq[anchor_start:anchor_end]
+                
+                fasta_rec = SeqRecord(
+                    anchor_seq,
+                    id=read.id,
+                    name = read.id,
+                    description=side + '_' + str(anchor_start) + '-' + str(anchor_end)
+                    )
+
+                fasta_out[side].append(fasta_rec)
+                anchor_d[read.id] = anchor_seq
+                
     for side in fasta_out:
         with open(f'{outpath}/anchors.{side}.fasta', 'w') as fasta_handle:
             SeqIO.write(fasta_out[side], fasta_handle, 'fasta')
-            
+
     return anchor_d
 
 
