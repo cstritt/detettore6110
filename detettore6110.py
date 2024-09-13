@@ -2,11 +2,9 @@
 # -*- coding: utf-8 -*-
 
 
-
 import argparse
 import atexit
-import os 
-import shutil
+import os
 import tempfile
 
 from lib import io
@@ -38,7 +36,7 @@ def get_args():
 
     parser_input.add_argument(
         '-t', dest="target",
-        default=os.path.join(path_to_detettore,'resources/is_targets/IS6110.fasta'),
+        default=os.path.join(path_to_detettore, 'resources/is_targets/IS6110.fasta'),
         help='IS consensus sequence in fasta format. [resources/is_targets/IS6110.fasta]')
     
     parser_input.add_argument(

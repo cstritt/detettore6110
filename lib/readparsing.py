@@ -194,28 +194,27 @@ def getsplitreads(bam, outpath, min_split_len=15, mapq=1):
 
     for read in pybam.fetch():
         
+        if read.is_unmapped:
+            continue
+        
         cigar = read.cigartuples
         
-        if len(cigar) > 1:
+        if len(cigar) == 2:
     
             first, last = cigar[0], cigar[-1]
-            
             # what if both ends are clipped? like this, first should be called
             # more often
-            if first[0] in (4,5):
+            if first[0] == 4:  # 4 stands for soft-clipped
                 cliplen = first[1]
 
-            elif last[0] in(4,5):
+            elif last[0] == 4:
                 cliplen = last[1]
                 
             else:
                 continue
             
-            if cliplen < min_split_len:
+            if (cliplen < min_split_len) or (read.mapping_quality < mapq):
                 continue
-            
-            if read.mapping_quality < mapq:
-                 continue
 
             # Write clipped to fasta
             name = read.query_name
@@ -223,6 +222,9 @@ def getsplitreads(bam, outpath, min_split_len=15, mapq=1):
                 name = name +'/1'
             elif read.is_read2:
                 name = name + '/2'
+                
+            # Reset read query name: add suffix, which is sometimes removed by minimap2
+            read.query_name = name
             
             seqrec = SeqRecord(
                 Seq(clip_seq(read.query_sequence, cigar)), 
@@ -233,7 +235,7 @@ def getsplitreads(bam, outpath, min_split_len=15, mapq=1):
             if name not in splitreads:
                 splitreads[name] = []
              
-            splitreads[name].append(read)
+            splitreads[name].append(read)  
             
             splitseqs.append(seqrec)
         

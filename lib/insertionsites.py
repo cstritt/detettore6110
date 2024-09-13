@@ -263,7 +263,7 @@ def cluster_splitreads(splitreads, hits, MIN_SPLIT_COV=5):
     Parameters
     ----------
     splitreads : dict
-        DESCRIPTION.
+        Output of readparsing.getsplitreads.
     hits : dict
         A dictoinary, output of parse_paf(), showing if and how a read
         maps against the IS target.
@@ -280,13 +280,10 @@ def cluster_splitreads(splitreads, hits, MIN_SPLIT_COV=5):
     
     split_positions = {}
 
-    # Discard splitreads not mapping to IS
-    split_spurious = set(splitreads.keys()) -  set(hits.keys())
+    # Discard splitreads not mapping to IS 
+    splitreads = {key: value for key, value in splitreads.items() if key in hits}
 
-    for readname in split_spurious: 
-        del splitreads[readname]
-        
-        
+    
     # dictionary of split positions
     for readname in splitreads:
         
@@ -313,8 +310,7 @@ def cluster_splitreads(splitreads, hits, MIN_SPLIT_COV=5):
                     split_positions[k] = []
                         
                 split_positions[k].append(read)
-                
-                
+
     remove = []
 
     for k in split_positions:
