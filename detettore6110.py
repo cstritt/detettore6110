@@ -81,9 +81,8 @@ def get_args():
             help='Number of CPUs. [4]')
 
     parser_settings.add_argument(
-        '--keep',
-        action='store_true',
-        help='Keep intermediate files.')
+        '--keep', dest='pref', type=str, default=False,
+        help='Keep intermediate files in folder <pref>_tmp.')
 
     args=parser.parse_args()
 

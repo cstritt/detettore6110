@@ -22,8 +22,8 @@ from collections import Counter
 def exit_handler(args, temp_dir, working_dir):
     """ Cleanup after program finish. If --keep is given, copy contents of 
     temporary directory to working directory before deleting it"""
-    if args.keep:  # Copy contents of temporary to working directory
-        shutil.copytree(temp_dir, os.path.join(working_dir, os.path.basename(temp_dir)))
+    if args.pref:  # Copy contents of temporary to working directory
+        shutil.copytree(temp_dir, os.path.join(working_dir, args.pref + '_tmp'))
         
     shutil.rmtree(temp_dir)
     
