@@ -7,4 +7,4 @@ testing/.ipynb_checkpoints/testing-checkpoint.ipynb
 testing/some_reads.bam
 testing/some_reads.bam.bai
 tmp*
-
+.vscode

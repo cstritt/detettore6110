@@ -29,7 +29,7 @@ def exit_handler(args, temp_dir, working_dir):
     
 
 
-def gene_overlap(position, annotation):
+def gene_overlap(position, annotation, chromosome_length):
     """  Given a genomic position, return the genomic context as given by 
     a gff annotation. Uses regex to extract strings after gene= and locus_tag=
     
@@ -44,6 +44,8 @@ def gene_overlap(position, annotation):
         Pandas data frame containing the gff annotation.
     annotation : str
         Path to annotation file in gff format.
+    chromosome_length : int
+        Length of the reference genome. Used to get distance to dnaA when insertion is at the very end. 
 
     Returns
     -------
@@ -80,10 +82,17 @@ def gene_overlap(position, annotation):
         
         dist_to_5 = position - annotation['end'][idx_s - 1]
         
+        # Insertion after last gene
+        if idx_s == len(annotation):
+            idx_s = 0
+        
         gene_info_3 = gene_id_regex(
             regex_patterns, annotation['attributes'][idx_s])
         
-        dist_to_3 = annotation['start'][idx_s] - position
+        if idx_s == 0:
+            dist_to_3 = chromosome_length - position
+        else:
+            dist_to_3 = annotation['start'][idx_s] - position
         
         return [f'{gene_info_5};{gene_info_3}', f'{dist_to_5};{dist_to_3}']
         
@@ -177,6 +186,10 @@ def write_output(args, clusters, copy_number, outpath,
         # Remove CDS entries
         annot = annot[annot['type'].isin(['gene', 'pseudogene', 'mobile_genetic_element'])]
         annot = annot.reset_index(drop=True)
+        
+    # Get chromosome length
+    reference = SeqIO.read(args.ref, 'fasta')
+    chrom_length = len(reference.seq)
     
     headerstr = '\t'.join(header)
     firstlines = f'#CN {copy_number}\n{headerstr}\n'
@@ -249,7 +262,7 @@ def write_output(args, clusters, copy_number, outpath,
         
         # Add gene information
         if args.annot:
-            gene_info = gene_overlap(POS, annot)
+            gene_info = gene_overlap(POS, annot, chrom_length)
             try:
                 outline += gene_info
             except TypeError:

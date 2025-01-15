@@ -1,0 +1,22 @@
+#!/bin/bash
+
+#SBATCH --cpus-per-task=10
+#SBATCH --mem-per-cpu=1G
+#SBATCH --time=00:06:00
+#SBATCH --qos=6hours
+#SBATCH --output=stdout.%j
+#SBATCH --error=stderr.%j
+
+GNR=$1
+
+source ~/miniconda3/etc/profile.d/conda.sh
+conda activate detettore6110
+
+V2=/scicore/home/gagneux/GROUP/tbresearch/genomes/IN_PROGRESS/common_mappings/PipelineTB/v2
+A=${GNR:0:3}
+B=${GNR:3:2}
+C=${GNR:5:2}
+
+PATH_TO_READS=${V2}/${A}/${B}/${C}/${GNR}.cram
+
+/scicore/home/gagneux/stritt0001/programs/detettore6110/detettore6110.py ${PATH_TO_READS} --keep

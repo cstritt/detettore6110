@@ -4,18 +4,14 @@ environment.yml: versioned main dependencies
 conda-lock.yml: locked subdependencies
 
 ```
-conda create -n detettore6110
-conda activate detettore6110
-conda install \
+conda create -n detettore6110 -c conda-forge \
   cd-hit \
   minimap2 \
-  pip \
   pysam \
   samtools \
   seqtk \
-  pandas
-
-pip install biopython
+  pandas \
+  biopython
 
 
 conda env export --from-history > environment.yml # manually edit to keep main dependencies??
