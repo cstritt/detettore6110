@@ -11,82 +11,132 @@ Approach:
 """
 
 import subprocess
+import os
 
 from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
+from Bio import AlignIO
+from Bio.Align import AlignInfo
+from collections import Counter
 
 
-def cluster_anchors(fasta, anchors, outpath):
-    """
-    Use cd-hit to cluster anchor reads, then assemble the reads of a cluster
-    into a single sequence with CAP3.
-    
-    cd-hit parameters don't seem to greatly affect the results (word size, 
-    minimum identity ...)
-    
-
-    Parameters
-    ----------
-
-    fasta : list
-        List of two fasta files, for the 5' and the 3' anchors
-    anchors : dict
-        Dictionary with read ID as key and sequence as value, as output by
-        subset_fastq.
-
-
-    Returns
-    -------    
-    
-    A fasta file with one assembled consensus sequence for each anchor cluster.
+class AnchorCluster:
     
     """
+    Info to add: to which part of the IS the reads map...
     
-    clusters = {
-        '5' : {},
-        '3' : {}
-        }
     
-    for f in fasta:
+    cluster_id, side, nr_reads, depth_start, depth_end, 
+    prop_sites_with_mismatches, len(consensus), consensus
+    
+    """
+    def __init__(self,cluster_nr, side):
+        self.cluster_nr = cluster_nr
+        self.side = side
+        self.cluster_id = f'{side}prime_{cluster_nr}'
+        self.reads = []
+    
+    
+    def add_read(self, read_id, read_dict):
+        anchor_seq = read_dict[read_id]
         
-        side = f.split('.')[-2]
+        anchor_rec = SeqRecord(
+            anchor_seq, 
+            id=read_id,
+            name='',
+            description = f'{self.side}_{self.cluster_nr}'
+            )
         
-        cd_hit = [
-            'cd-hit-est',
-            '-i', f,
-            '-d', '0',
-            '-c', '0.95',
-            '-o', f'{outpath}/cd_hit_{side}',
-            '-sc', '1']
+        self.reads.append(anchor_rec)
+    
+    
+    def align_anchor_reads(self, temp_dir, args):
         
-        subprocess.run(cd_hit, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        fasta_path = os.path.join(temp_dir, f'{self.cluster_id}.fasta')
+        alignment_path = os.path.join(temp_dir, f'{self.cluster_id}.fasta')
         
-        # Collect anchor sequences for each cluster
-        with open(f'{outpath}/cd_hit_{side}.clstr') as f:
-            for line in f:
+        with open(fasta_path, 'w') as fasta_handle:
+            SeqIO.write(self.reads, fasta_handle, 'fasta')
+        
+        mafft_cmd = [
+            'mafft',
+            '--thread', args.cpus,
+            '--adjustdirection',
+            fasta_path
+            ]
+        
+        subprocess.run(mafft_cmd, check=True, 
+                    stdout=open(alignment_path, 'w'), 
+                    stderr=subprocess.DEVNULL)
+        
+        
+    def get_cluster_consensus(self, alignment_path):
+        
+        aln = AlignIO.read(open(alignment_path), "fasta")
+        aln_smry = AlignInfo.SummaryInfo(aln)
+        
+        self.nr_reads = len(aln)
+        self.aln_len = aln.get_alignment_length()
+        
+        consensus = ''
+        n_sites_with_mismatches = 0
+        
+        for i in range(self.aln_len):
+            col = aln_smry.get_column(i)
+            count_missing = col.count('-')
+            count_present = self.nr_reads - count_missing
+            
+            # Check on which side the "tail" of the alignment is
+            if i == 0:
+                self.depth_start = count_present
+            if i == (self.aln_len-1):
+                self.epth_end = count_present         
+            
+            # Get consensus base
+            if count_present >= 3:
+                counter = Counter(col.replace('-', ''))
+                base = counter.most_common(1)[0][0]
+                if len(counter) > 1:
+                    n_sites_with_mismatches += 1
+            else:
+                base = '-'
                 
-                if line.startswith('>'):
-                    
-                    cluster_nr = line.strip().split(' ')[-1]
-                    clusters[side][cluster_nr] = []
-                    
-                else:
-                    read_id = line.strip().split(' ')[1][1:-3]
-                    anchor_seq = anchors[read_id]
-                    anchor_rec = SeqRecord(
-                        anchor_seq, 
-                        id=read_id,
-                        name='',
-                        description = side +'_' + cluster_nr
-                        )
-                    
-                    clusters[side][cluster_nr].append(anchor_rec)
-                    
+            consensus += base
+        
+        self.consensus = consensus.strip('-').upper()
+        self.prop_sites_with_mismatches = round(n_sites_with_mismatches / self.aln_len, 2)
+
+
+def cd_hit(fasta_path, output_path):
+    
+    cd_hit = [
+        'cd-hit-est',
+        '-i', fasta_path,
+        '-d', '0',
+        '-c', '0.95',
+        '-o', output_path,
+        '-sc', '1'
+        ]
+        
+    subprocess.run(cd_hit, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    # Parse output
+    clusters = {}
+    
+    with open(output_path) as f:
+        for line in f:
+        
+            if line.startswith('>'):
+                cluster_nr = line.strip().split(' ')[-1]
+                clusters[cluster_nr] = []
+            else:
+                read_id = line.strip().split(' ')[1][1:-3]
+                clusters[cluster_nr].append(read_id)
+    
     return clusters
 
 
-
-def get_copy_number(clusters, min_cluster_size=10):
+def infer_copy_number(clusters, min_cluster_size=10):
     """
 
     Parameters
@@ -116,16 +166,47 @@ def get_copy_number(clusters, min_cluster_size=10):
             n_clusters[side] += 1
 
     copy_number = min([n_clusters['5'], n_clusters['3']])
-    return copy_number
+    return copy_number   
 
+
+
+def main(path_to_5prime_anchors, path_to_3prime_anchors, anchor_dict, temp_dir, args):
+
+    clusters = {
+        '5' :[],
+        '3' : []
+        }
+    
+    for side, f in map(
+        ['5', '3'],
+        [path_to_5prime_anchors, path_to_3prime_anchors]):
+        
+        # Cluster reads with cd-hit
+        cd_hit_out = f'{temp_dir}/cd_hit_{side}'
+        clusters = cd_hit(f, cd_hit_out)
+        
+        for cluster_nr in clusters:
+            anchor_cluster = AnchorCluster(cluster_nr, side)
+            for read in clusters[cluster_nr]:
+                anchor_cluster.add_read(read, anchor_dict)
+
+            anchor_cluster.align_anchor_reads(temp_dir, args)
+            anchor_cluster.get_cluster_consensus()
+
+
+
+
+#%% NOT USED
 
 def assemble_cluster_consensi(clusters, params):
     """ Use cap3 to assemble the reads of a cluster into a consensus sequence.
     
+    NOT USED, the mafft approach offers more control.
+    
     Cave: assembled sequences are often few bp short at the clipped end! So
     better map the original reads.
     
-    Better: use mafft to align!
+    OR: use mafft to align!
 
     
     Parameters
@@ -151,7 +232,7 @@ def assemble_cluster_consensi(clusters, params):
                 SeqIO.write(clusters[side][cluster_nr], fasta_handle, 'fasta')
                 
             # Assemble
-            cap3_cmd = ['/home/cristobal/programs/CAP3/cap3', params.tmp + '/cluster.tmp.fasta']
+            cap3_cmd = ['cap3', params.tmp + '/cluster.tmp.fasta']
             
             subprocess.run(cap3_cmd, check=True, stderr=subprocess.DEVNULL)
             
@@ -175,5 +256,3 @@ def assemble_cluster_consensi(clusters, params):
             SeqIO.write(rec, f, 'fasta')
         
     return cluster_consensi
-
-

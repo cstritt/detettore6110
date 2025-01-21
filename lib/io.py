@@ -14,7 +14,6 @@ import pysam
 import re
 import shutil
 
-
 from Bio import SeqIO
 from collections import Counter
     
@@ -27,7 +26,6 @@ def exit_handler(args, temp_dir, working_dir):
         
     shutil.rmtree(temp_dir)
     
-
 
 def gene_overlap(position, annotation, chromosome_length):
     """  Given a genomic position, return the genomic context as given by 
@@ -122,7 +120,6 @@ def gene_id_regex(patterns, gff_attributes):
         
 
     
-
 def write_output(args, clusters, copy_number, outpath, 
                  both_sides=True, require_tsd=True, mapq_filt=True):
     """ Write detettore6110 output, including copy number and 
@@ -244,7 +241,7 @@ def write_output(args, clusters, copy_number, outpath,
 
         # At least some anchors should have a mapq > 0
         if mapq_filt and sum_anchor_mapqs == 0:
-                continue
+            continue
         
         
         # Target site duplication
@@ -330,8 +327,6 @@ def consensus_from_bam(region, bamfile, min_mapq=1, min_baseq=1):
         Consensus sequence of the region.
 
     """
-
-
     pybam = pysam.AlignmentFile(bamfile, "rb")
 
     chrmsm, strt, end = region[0], region[1]-1, region[2]

@@ -1,6 +1,7 @@
 ![](detettore_ad.png)
 
-First running version for testing with different coverages and read lengths.
+Dev version, implementing a new, reference-free approach, where insertions are characterized by 
+anchor consensus sequences rather than insertion locations. 
 
 ## Install
 Clone the repository
