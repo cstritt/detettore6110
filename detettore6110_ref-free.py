@@ -1,11 +1,15 @@
+#!/usr/bin/env python3
 #%%
+import argparse
 import os
 import tempfile
 
 from lib import classi_e_funzioni as cef
 from lib import readparsing
+from lib import reads
+from lib import clusters
 
-#%% mise en place
+#%% MISE EN PLACE
 class args:
     def __init__(self):
         
@@ -23,8 +27,7 @@ reads = [os.path.abspath(x) for x in args.reads]
 target = os.path.abspath(args.target)
 
 
-#%% Convert input bam/cram to fastq
-
+# Convert input bam/cram to fastq
 read_suffix = set([x.split('.')[-1] for x in reads]).pop()
 
 if len(reads) == 1 and read_suffix in ['bam', 'cram', 'sam']:
@@ -40,16 +43,10 @@ readparsing.mapreads(
 #%% Create read dictionary
 from lib import classi_e_funzioni as cef
 read_dict = cef.parse_paf(f'{temp_dir}/reads_vs_IS.paf')
+
+# Traverse fastq and get read sequences. 
+# Optionally write file with complete reads for reference mapping!
 cef.add_seqs_to_read_dict(read_dict, reads, temp_dir)
-
-
-
-
-
-
-
-
-
 
 
 #%% Cluster reads with cd-hit-est, separately for 5' and 3' side
@@ -59,117 +56,55 @@ anchor_clusters = {
 }
 
 for side in anchor_clusters:
-    clusters = cef.cd_hit(f'{temp_dir}/anchors.{side}.fasta', f'{temp_dir}/cd_hit_{side}', side)
+    
+    clusters = cef.cd_hit(
+        f'{temp_dir}/anchors.{side}.fasta', 
+        f'{temp_dir}/cd_hit_{side}')
+    
     for cluster_id in clusters:
+        
         anchor_cluster = cef.AnchorCluster(cluster_id, side)
+        
         for read in clusters[cluster_id]:
-            anchor_cluster.add_read(read, read_dict)
+            anchor_cluster.add_read(read, read_dict)  ### ambiguous read_dict!
+            
         anchor_cluster.align_anchor_reads(temp_dir, args)
-        anchor_cluster.get_cluster_consensus()
-        
-    
-
-#%% Create output file
-
-
-
-    
+        anchor_cluster.get_cluster_consensus(temp_dir)
+        anchor_clusters[side][cluster_id] = anchor_cluster
         
         
-#%% Assemble the reads in each cluster: mafft approach
+#%% Summarize output 
+for side in anchor_clusters:
+    for cluster_id in anchor_clusters[side]:
+        print(cluster_id, len(anchor_clusters[side][cluster_id].reads))
+        
 
-""" 
-Aim: create summary table with 
 
-cluster_id, side, nr_reads, consensus 
+#%% Optional: identify reference positions
 
-Modify get_partially_mapping, so it also returns info about the IS:
-    - which parts of the IS, how much
-    - sequence identity
-    
-Output:
-    - cluster_id
-    - side
-    - nr_reads
-    - depth_start
-    - depth_end
-    - prop_sites_with_mismatches
-    - len(consensus)
-    - consensus
-    
+# Map partially mapping reads against reference
+readparsing.mapreads(
+    [f'{temp_dir}/partially_mapping.fastq.gz'], reference, 
+    'reads_vs_ref', temp_dir, 'bam', args.cpus, k=9, m=10)
 
+
+"""
+# Get split reads from reference alignment
+splitreads = readparsing.getsplitreads(
+    f'{temp_dir}/reads_vs_ref.bam', temp_dir, args.min_split_len, args.mapq)
+
+# Extract partially mapping reads    
+partially_mapping = readparsing.get_partially_mapping(f'{temp_dir}/reads_vs_IS.paf')
+
+# Write to fastq
+readparsing.subset_fastq(partially_mapping, reads, temp_dir)
+anchors = readparsing.write_anchor_sequences(f"{temp_dir}/partially_mapping.fastq.gz", partially_mapping, temp_dir)
 """
 
 
+#%% Create output
 
-import subprocess
 
-from Bio import SeqIO
-from Bio.SeqRecord import SeqRecord
-from Bio import AlignIO
-from Bio.Align import AlignInfo
-from collections import Counter
 
-min_depth = 3
-
-cluster_consensi = {}
-
-for side in anchor_clusters:
-    for cluster_nr in anchor_clusters[side]:
+    
         
-        cluster_id = f'{side}prime_{cluster_nr}'
-        
-        with open(os.path.join(temp_dir, f'{cluster_id}.fasta'), 'w') as fasta_handle:
-            SeqIO.write(anchor_clusters[side][cluster_nr], fasta_handle, 'fasta')
-         
-        mafft_cmd = [
-            'mafft',
-            '--thread', args.cpus,
-            '--adjustdirection',
-            os.path.join(temp_dir, f'{cluster_id}.fasta')
-            ]
-        
-        subprocess.run(mafft_cmd, check=True, 
-                       stdout=open(os.path.join(temp_dir, f'{cluster_id}.aligned.fasta'), 'w'), 
-                       stderr=subprocess.DEVNULL)
-        
-
-        # Get consensus from alignment
-        aln = AlignIO.read(open(os.path.join(temp_dir, f'{cluster_id}.aligned.fasta')), "fasta")
-        nr_reads = len(aln)
-        aln_len = aln.get_alignment_length()
-        
-        # Create consensus
-        aln_smry = AlignInfo.SummaryInfo(aln)
-        consensus = ''
-        n_sites_with_mismatches = 0
-        
-        for i in range(aln_len):
-            col = aln_smry.get_column(i)
-            count_missing = col.count('-')
-            count_present = nr_reads - count_missing
-            prop_missing = count_missing / nr_reads
-            
-            # To check on which side the "tail" of the alignment is
-            if i == 0:
-                depth_start = count_present
-            if i == (aln_len-1):
-                depth_end = count_present         
-            
-            # Get consensus base            
-            if count_present >= 3:
-                counter = Counter(col.replace('-', ''))
-                base = counter.most_common(1)[0][0]
-                if len(counter) > 1:
-                    n_sites_with_mismatches += 1
-            else:
-                base = '-'
-                
-            consensus += base                
-        consensus = consensus.strip('-').upper()
-        prop_sites_with_mismatches = round(n_sites_with_mismatches / aln_len, 2)
-        
-        row = [cluster_id, side, nr_reads, depth_start, depth_end, prop_sites_with_mismatches, len(consensus), consensus]    
-        print(row)
-        
-        os.remove(os.path.join(temp_dir, f'{cluster_id}.fasta'))

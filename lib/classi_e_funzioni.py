@@ -22,14 +22,26 @@ class Read:
     
     """
     def __init__(self, read_id):
+        """
+        Initialize a Read object with a read ID.
+        
+        Parameters
+        ----------
+        read_id : str
+            ID of the read
+            
+        """
         self.read_id = read_id
     
     def add_coordinates(self, paf_row):
         """
-    
-        query = read
-        target = IS sequence
+        Add the coordinates of the read to the object, given a paf row.
         
+        Parameters
+        ----------
+        paf_row : list
+            A list of strings, where each element is a field from a paf row.
+            
         """
         # Anchor part (read part that does not map against IS)
         query_start = int(paf_row[2])
@@ -62,6 +74,14 @@ class Read:
     
     def add_sequences(self, read):
         
+        """
+        Add sequences of the anchor and target parts to the read.
+        
+        Parameters
+        ----------
+        read : SeqRecord
+            The read from which to extract the sequences.
+        """
         anchor_seq = read.seq[self.anchor_start:self.anchor_end]        
         target_seq = read.seq[self.target_start:self.target_end]
                 
@@ -81,15 +101,19 @@ class Read:
         
 
 class AnchorCluster:
-    """
-    Info to add: to which part of the IS the reads map...
-    
-    
-    cluster_id, side, nr_reads, depth_start, depth_end, 
-    prop_sites_with_mismatches, len(consensus), consensus
-    
-    """
+
     def __init__(self,cluster_nr, side):
+        """
+        Initialize an AnchorCluster instance with a cluster number and side.
+
+        Parameters
+        ----------
+        cluster_nr : int
+            The cluster number for this anchor cluster.
+        side : str
+            The side (either '5' or '3') of the anchor cluster.
+        """
+
         self.cluster_nr = cluster_nr
         self.side = side
         self.cluster_id = f'{side}prime_{cluster_nr}'
@@ -97,22 +121,35 @@ class AnchorCluster:
     
     
     def add_read(self, read_id, read_dict):
-        anchor_seq = read_dict[read_id]
+        """
+        Add a read to the AnchorCluster instance.
         
-        anchor_rec = SeqRecord(
-            anchor_seq, 
-            id=read_id,
-            name='',
-            description = f'{self.side}_{self.cluster_nr}'
-            )
-        
+        Parameters
+        ----------
+        read_id : str
+            ID of the read to add.
+        read_dict : dict
+            Dictionary with read IDs as keys and anchor sequences as values.
+        """
+        anchor_rec = read_dict[read_id].anchor
+        #anchor_rec.description = f'{self.side}_{self.cluster_nr}'
         self.reads.append(anchor_rec)
     
     
     def align_anchor_reads(self, temp_dir, args):
         
+        """
+        Align the reads in the AnchorCluster instance with MAFFT.
+        
+        Parameters
+        ----------
+        temp_dir : str
+            Path to temporary directory.
+        args : class
+            Input arguments.
+        """
         fasta_path = os.path.join(temp_dir, f'{self.cluster_id}.fasta')
-        alignment_path = os.path.join(temp_dir, f'{self.cluster_id}.fasta')
+        alignment_path = os.path.join(temp_dir, f'{self.cluster_id}.aligned.fasta')
         
         with open(fasta_path, 'w') as fasta_handle:
             SeqIO.write(self.reads, fasta_handle, 'fasta')
@@ -129,8 +166,39 @@ class AnchorCluster:
                     stderr=subprocess.DEVNULL)
         
         
-    def get_cluster_consensus(self, alignment_path):
+    def get_cluster_consensus(self, temp_dir):
         
+        """
+        Compute the consensus sequence for the cluster based on alignment.
+
+        This method reads the alignment from a given file, calculates the
+        consensus sequence, and determines the proportion of sites with
+        mismatches. It also tracks the sequence depth at the start and end
+        of the alignment.
+
+        Parameters
+        ----------
+        alignment_path : str
+            Path to the alignment file in FASTA format.
+
+        Attributes
+        ----------
+        nr_reads : int
+            Number of reads in the alignment.
+        aln_len : int
+            Length of the alignment.
+        consensus : str
+            Consensus sequence derived from the alignment.
+        depth_start : int
+            Depth of sequence coverage at the start of the alignment.
+        depth_end : int
+            Depth of sequence coverage at the end of the alignment.
+        prop_sites_with_mismatches : float
+            Proportion of sites with mismatches in the alignment.
+        """
+        
+        alignment_path = os.path.join(temp_dir, f'{self.cluster_id}.aligned.fasta')
+
         aln = AlignIO.read(open(alignment_path), "fasta")
         aln_smry = AlignInfo.SummaryInfo(aln)
         
@@ -220,6 +288,27 @@ def parse_paf(paf_file, min_anchor_len=20, min_hit_len=20):
 
 def add_seqs_to_read_dict(read_dict, reads, temp_dir, write_fasta=True):
     
+    """
+    Add sequences from FASTQ files to the read dictionary and optionally write them to FASTA files.
+
+    This function processes a list of FASTQ files, extracting sequences for
+    reads present in the provided read dictionary. The sequences are added to
+    each read's corresponding entry in the dictionary. Optionally, the function
+    can write the sequences to separate FASTA files for each side ('5' and '3').
+
+    Parameters
+    ----------
+    read_dict : dict
+        A dictionary where keys are read IDs and values are Read objects.
+    reads : list
+        A list of paths to FASTQ files containing the reads.
+    temp_dir : str
+        The path to the temporary directory where FASTA files will be written.
+    write_fasta : bool, optional
+        If True, writes the anchor sequences to FASTA files (default is True).
+
+    """
+
     fasta_out = {
         '5' : [],
         '3' : [], 
@@ -252,6 +341,24 @@ def add_seqs_to_read_dict(read_dict, reads, temp_dir, write_fasta=True):
 
 def cd_hit(fasta_path, output_path):
     
+    """
+    Run cd-hit-est on a fasta file of anchor sequences and return a dictionary
+    where keys are cluster numbers and values are lists of read IDs present in
+    each cluster.
+
+    Parameters
+    ----------
+    fasta_path : str
+        The path to the fasta file to be clustered.
+    output_path : str
+        The path to the output file (without the .clstr extension).
+
+    Returns
+    -------
+    clusters : dict
+        A dictionary where keys are cluster numbers and values are lists of
+        read IDs present in each cluster.
+    """
     cd_hit = [
         'cd-hit-est',
         '-i', fasta_path,
@@ -266,7 +373,7 @@ def cd_hit(fasta_path, output_path):
     # Parse output
     clusters = {}
     
-    with open(output_path) as f:
+    with open(f'{output_path}.clstr') as f:
         for line in f:
         
             if line.startswith('>'):
