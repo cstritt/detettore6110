@@ -2,18 +2,18 @@ import os
 import subprocess
 
 from Bio import SeqIO
-from Bio.SeqRecord import SeqRecord
-from collections import Counter
 from Bio import AlignIO
 from Bio.Align import AlignInfo
+from collections import Counter
 
 
 class AnchorCluster:
 
-    def __init__(self,cluster_nr, side):
+    def __init__(self, cluster_nr, side):
         """
         Initialize an AnchorCluster instance with a cluster number and side. 
-        Side refers to whether the reads map to the 5' or 3' side of the IS target.
+        Side refers to whether the reads map to the 5' or 3' side of the IS 
+        target.
 
         Parameters
         ----------
@@ -28,7 +28,6 @@ class AnchorCluster:
         self.cluster_id = f'{side}prime_{cluster_nr}'
         self.reads = []
     
-    
     def add_read(self, read_id, read_dict):
         """
         Add a read to the AnchorCluster instance.
@@ -41,9 +40,7 @@ class AnchorCluster:
             Dictionary with read IDs as keys and anchor sequences as values.
         """
         anchor_rec = read_dict[read_id].anchor
-        #anchor_rec.description = f'{self.side}_{self.cluster_nr}'
         self.reads.append(anchor_rec)
-    
     
     def align_anchor_reads(self, temp_dir, args):
         
@@ -70,11 +67,8 @@ class AnchorCluster:
             fasta_path
             ]
         
-        subprocess.run(mafft_cmd, check=True, 
-                    stdout=open(alignment_path, 'w'), 
-                    stderr=subprocess.DEVNULL)
-        
-        
+        subprocess.run(mafft_cmd, check=True, stdout=open(alignment_path, 'w'), stderr=subprocess.DEVNULL)
+               
     def get_cluster_consensus(self, temp_dir):
         
         """
@@ -106,7 +100,8 @@ class AnchorCluster:
             Proportion of sites with mismatches in the alignment.
         """
         
-        alignment_path = os.path.join(temp_dir, f'{self.cluster_id}.aligned.fasta')
+        alignment_path = os.path.join(
+            temp_dir, f'{self.cluster_id}.aligned.fasta')
 
         aln = AlignIO.read(open(alignment_path), "fasta")
         aln_smry = AlignInfo.SummaryInfo(aln)
@@ -143,7 +138,7 @@ class AnchorCluster:
         self.prop_sites_with_mismatches = round(n_sites_with_mismatches / self.aln_len, 2)
         
     def find_reference_position(self):
-        """ Given the read IDs in the cluster, get the mapping positions of the reads in the reference.  
+        """ Map cluster consensi against reference.  
         
         
         """

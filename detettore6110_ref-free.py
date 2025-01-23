@@ -1,31 +1,35 @@
 #!/usr/bin/env python3
-#%%
-import argparse
+
+# %%
+
 import os
+import shutil
 import tempfile
 
+from Bio import SeqIO
 from lib import classi_e_funzioni as cef
 from lib import readparsing
-from lib import reads
-from lib import clusters
 
-#%% MISE EN PLACE
 class args:
     def __init__(self):
-        
-        self.reads = ['/scicore/home/gagneux/GROUP/tbresearch/genomes/IN_PROGRESS/common_mappings/PipelineTB/v2/G22/51/3/G22513.cram']
+        self.reads = ['testing/reads.orygis.fastq.gz']
         self.target = 'resources/is_targets/IS6110.fasta'
         self.cpus = '4'
-        
+        self.reference = 'resources/reference/MTBC0_v1.1.fasta'
 
 args = args()
 
 working_dir = os.getcwd()    
-temp_dir = tempfile.mkdtemp()
-
 reads = [os.path.abspath(x) for x in args.reads]
 target = os.path.abspath(args.target)
 
+
+#temp_dir = tempfile.mkdtemp()
+# Keep files for developing...
+temp_dir = 'testing/tmp'
+if os.path.exists(temp_dir):
+    shutil.rmtree(temp_dir)
+os.mkdir(temp_dir)
 
 # Convert input bam/cram to fastq
 read_suffix = set([x.split('.')[-1] for x in reads]).pop()
@@ -33,59 +37,62 @@ read_suffix = set([x.split('.')[-1] for x in reads]).pop()
 if len(reads) == 1 and read_suffix in ['bam', 'cram', 'sam']:
     bamfile = reads[0]        
     reads = [readparsing.bam_to_fastq(bamfile, f'{temp_dir}/reads.fastq.gz')]
-    
 
-#%% Map reads against IS6110
-readparsing.mapreads(
+# Map reads against IS target
+cef.mapreads(
     reads, target, 'reads_vs_IS', temp_dir, 'paf', args.cpus, k=9, m=10)
 
 
-#%% Create read dictionary
-from lib import classi_e_funzioni as cef
-read_dict = cef.parse_paf(f'{temp_dir}/reads_vs_IS.paf')
+# Create read dictionary
+read_d = cef.parse_paf(f'{temp_dir}/reads_vs_IS.paf')
 
-# Traverse fastq and get read sequences. 
-# Optionally write file with complete reads for reference mapping!
-cef.add_seqs_to_read_dict(read_dict, reads, temp_dir)
+# Traverse fastq and add anchor and hit parts of the reads
+cef.add_seqs_to_read_dict(read_d, reads, temp_dir)
 
 
-#%% Cluster reads with cd-hit-est, separately for 5' and 3' side
-anchor_clusters = {
-    '5' : {},
-    '3' : {}
-}
+# Cluster reads with cd-hit-est and summarize clusters
+clusters = cef.parse_clusters(read_d, temp_dir, args)   
 
-for side in anchor_clusters:
-    
-    clusters = cef.cd_hit(
-        f'{temp_dir}/anchors.{side}.fasta', 
-        f'{temp_dir}/cd_hit_{side}')
-    
-    for cluster_id in clusters:
-        
-        anchor_cluster = cef.AnchorCluster(cluster_id, side)
-        
-        for read in clusters[cluster_id]:
-            anchor_cluster.add_read(read, read_dict)  ### ambiguous read_dict!
-            
-        anchor_cluster.align_anchor_reads(temp_dir, args)
-        anchor_cluster.get_cluster_consensus(temp_dir)
-        anchor_clusters[side][cluster_id] = anchor_cluster
-        
+
+
+#%% Optional: identify reference positions
+
+readparsing.mapreads(
+    [f'{temp_dir}/anchor_consensi.fasta'], args.reference, 
+    'reads_vs_ref', temp_dir, 'bam', args.cpus, k=9, m=10)
+
+
+
+
         
 #%% Summarize output 
 for side in anchor_clusters:
     for cluster_id in anchor_clusters[side]:
         print(cluster_id, len(anchor_clusters[side][cluster_id].reads))
-        
 
 
-#%% Optional: identify reference positions
 
-# Map partially mapping reads against reference
-readparsing.mapreads(
-    [f'{temp_dir}/partially_mapping.fastq.gz'], reference, 
-    'reads_vs_ref', temp_dir, 'bam', args.cpus, k=9, m=10)
+
+
+
+
+
+
+
+
+
+#%%
+import pysam
+bam = f'{temp_dir}/reads_vs_ref.bam'
+pybam = pysam.AlignmentFile(bam, "rb")
+
+for read in pybam.fetch():
+    print(read.query_name, 
+          read.reference_start, read.reference_end, 
+          read.cigarstring, read.mapping_quality)
+    
+
+pybam.close()
 
 
 """
