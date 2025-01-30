@@ -117,13 +117,116 @@ def gene_id_regex(patterns, gff_attributes):
         match = re.search(pattern, gff_attributes)
         if match:
             return match.group(1)
+
+
+
+def write_cluster_output():
+    pass
+
+
+def write_reference_output(args, overlaps, cluster_d, outpath):
+    
+    """
+    Write the reference output with insertion details to a file or stdout.
+
+    This function processes identified insertions and writes details such as 
+    chromosome, position, strand, support from anchor reads, and target site 
+    duplication (TSD) to a specified output file or standard output. If provided, 
+    it also includes gene information and the distance to the gene.
+
+    Parameters
+    ----------
+    args : class
+        Input arguments containing the output file path, annotation file, and reference file.
+    overlaps : list
+        List of identified insertions with details on position, cluster numbers, and TSD length.
+    cluster_d : dict
+        Dictionary containing clusters of anchor reads for both 5' and 3' sides.
+    outpath : str
+        Path to the output directory (not used in this function).
+
+    Returns
+    -------
+    None
+    """
+
+    if args.outfile:
+        outhandle = open(args.outfile, 'w')
         
+    header = ['chromosome', 'position', 'strand', 'support_5', 'support_3', 'TSD']
+    
+    # If an annotation is provided, load it and add gene information to output
+    if args.annot:
+        header += ['gene', 'dist_to_gene']
+        
+        annot = pandas.read_csv(
+            args.annot, sep='\t', comment='#', 
+            names=['seqid', 'source', 'type', 'start', 'end','score', 'strand', 'phase','attributes'])
+        
+        # Remove CDS entries
+        annot = annot[annot['type'].isin(['gene', 'pseudogene', 'mobile_genetic_element'])]
+        annot = annot.reset_index(drop=True)
+        
+    # Get chromosome length
+    reference = SeqIO.read(args.ref, 'fasta')
+    chrom_length = len(reference.seq)
+    
+    headerstr = '\t'.join(header) + '\n'
+    outhandle.write(headerstr) if args.outfile else sys.stdout.write(headerstr)
+    
+    # Get chromosome name, assuming that the reference is a single contig    
+    chromosomes = [seq_record.id for seq_record in SeqIO.parse(args.ref, 'fasta')]
+    chrom = chromosomes[0]
+
+    
+    # Now loop through identified mutations 
+    for ins in overlaps:
+
+        position = ins[1]
+        strand = '+' if ins[0].startswith('5prime') else '-'
+
+        # Nr anchor reads
+        if strand == '+':
+            five_cl_nr = int(ins[0].split('_')[1])
+            three_cl_nr = int(ins[2].split('_')[1])
+        elif strand == '-':
+            five_cl_nr = int(ins[2].split('_')[1])
+            three_cl_nr = int(ins[0].split('_')[1])
+            
+        support_5 = len(cluster_d['5'][five_cl_nr].reads)
+        support_3 = len(cluster_d['3'][three_cl_nr].reads)
+
+        # TSD
+        tsd_len = ins[4]
+        tsd = cluster_d['5'][five_cl_nr].consensus.seq[-tsd_len:]
+
+        outline = [chrom, str(position), strand, str(support_5), str(support_3), str(tsd)]
+
+        if args.annot:
+            gene, dists_to_gene = gene_overlap(position, annot, chrom_length)
+            outline += [gene, dists_to_gene]
+            
+        outline = map(str, outline)
+
+        if args.outfile:
+            outhandle.write('\t'.join(outline) + '\n')
+        
+        else:
+            sys.stdout.write('\t'.join(outline) + '\n')
+    
+    if args.outfile:    
+        outhandle.close()
+
+
+
 
     
 def write_output(args, clusters, copy_number, outpath, 
                  both_sides=True, require_tsd=True, mapq_filt=True):
     """ Write detettore6110 output, including copy number and 
     insertion sites. 
+    
+    DEPRECATED
     
     (Only the mapq filter works properly at the moment! All other need to
     be set to true. Maybe implement less stringent filtering and allow

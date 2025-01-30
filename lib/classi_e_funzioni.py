@@ -11,7 +11,7 @@ from Bio.SeqRecord import SeqRecord
 from Bio import AlignIO
 from Bio.Align import AlignInfo
 from collections import Counter
-
+from sklearn.linear_model import LinearRegression
 
 #%% Two main classes
 
@@ -58,6 +58,7 @@ class Read:
         query_start = int(paf_row[2])
         query_end = int(paf_row[3])
         query_len = int(paf_row[1])
+        self.query_strand = paf_row[4]
         
         not_mapping = set(range(query_len)) - set(range(query_start, query_end))
 
@@ -83,8 +84,7 @@ class Read:
         # Part of the IS covered by the read
         self.target_coordinates.append((target_start, target_end))
         
-        
-    
+
     def add_sequences(self, read):
         
         """
@@ -101,11 +101,19 @@ class Read:
             
             anchor_start, anchor_end = anchor
             target_start, target_end = target
+            
+            # Reorient reads such that they all begin with the IS overlapping part
+            # This will allow more stric clustering with cd-hiz-est (-ap)
+            anchor_seq = read.seq[anchor_start:anchor_end+1]
+            read_id = f'{read.id}_{i}'
+            
+            if self.query_strand == '-':
+                anchor_seq = anchor_seq.reverse_complement()                
                         
             self.anchor_seq.append(
                 SeqRecord(
-                    read.seq[anchor_start:anchor_end]    ,
-                    id=f'{read.id}_{i}',
+                    anchor_seq,
+                    id=read_id,
                     name = '',
                     description=f'{anchor_start}-{anchor_end}'
                 )    
@@ -113,7 +121,7 @@ class Read:
             
             self.target_seq.append(
                 SeqRecord(
-                    read.seq[target_start:target_end],
+                    read.seq[target_start:target_end+1],
                     id=f'{read.id}_{i}',
                     name = '',
                     description=f'{target_start}-{target_end}'
@@ -136,23 +144,7 @@ class AnchorCluster:
         self.side = side
         self.cluster_id = f'{side}prime_{cluster_nr}'
         self.reads = []
-    
-    
-    def add_read(self, read_id, read_dict):
-        """
-        Add a read to the AnchorCluster instance.
-        
-        Parameters
-        ----------
-        read_id : str
-            ID of the read to add.
-        read_dict : dict
-            Dictionary with read IDs as keys and anchor sequences as values.
-        """
-        anchor_rec = read_dict[read_id].anchor
-        #anchor_rec.description = f'{self.side}_{self.cluster_nr}'
-        self.reads.append(anchor_rec)
-    
+        self.seqs = []
     
     def align_anchor_reads(self, temp_dir, args):
         
@@ -170,7 +162,7 @@ class AnchorCluster:
         alignment_path = os.path.join(temp_dir, f'{self.cluster_id}.aligned.fasta')
         
         with open(fasta_path, 'w') as fasta_handle:
-            SeqIO.write(self.reads, fasta_handle, 'fasta')
+            SeqIO.write(self.seqs, fasta_handle, 'fasta')
         
         mafft_cmd = [
             'mafft',
@@ -184,18 +176,35 @@ class AnchorCluster:
                     stderr=subprocess.DEVNULL)
         
     def summarize_IS_coordinates(self, read_d):
-        """ 
-        
-        
+        """ Go through reads and store which positions of the IS are covered
         """
-        pass
-                
         
+        self.target_cov = {}
+        for read_id in self.reads:
+            
+            read = read_d[read_id]
+            for coords in read.target_coordinates:
+                start, end = coords
+                for i in range(start, end+1):
+                    if i not in self.target_cov:
+                        self.target_cov[i] = 0
+                    self.target_cov[i] += 1
+                
+        depth = [self.target_cov[i] for i in self.target_cov]
+        
+        pos = [[i] for i in self.target_cov]  # sort and use index rather than actual position
+        
+        self.target_lm = lm(depth, pos)
+                
 
     def get_cluster_consensus(self, temp_dir):
         
         """
         Compute the consensus sequence for the cluster based on alignment.
+        
+        To assess the quality of the cluster, fit an lm(coverage~position). 
+        Slope and intercept show if the coverage is increasing or decreasing as 
+        expected, or if the cluster is messy and no trend in coverage is there.
 
         This method reads the alignment from a given file, calculates the
         consensus sequence, and determines the proportion of sites with
@@ -234,21 +243,29 @@ class AnchorCluster:
         consensus = ''
         n_sites_with_mismatches = 0
         
+        # For linear model
+        depth = []
+        position = []
+        
         for i in range(self.aln_len):
             col = aln_smry.get_column(i)
             count_missing = col.count('-')
             count_present = self.nr_reads - count_missing
             
+            depth.append(count_present)
+            position.append([i+1])
+            
             # Check on which side the "tail" of the alignment is
             if i == 0:
                 self.depth_start = count_present
             if i == (self.aln_len-1):
-                self.epth_end = count_present         
+                self.depth_end = count_present         
             
             # Get consensus base
             if count_present >= 3:
-                counter = Counter(col.replace('-', ''))
+                counter = Counter(col.replace('-', ''))  # don't! Majority can be gap
                 base = counter.most_common(1)[0][0]
+                
                 if len(counter) > 1:
                     n_sites_with_mismatches += 1
             else:
@@ -267,9 +284,7 @@ class AnchorCluster:
             description=''
             )
         
-
-
-
+        self.anchor_lm = lm(depth, position)
 
 #%% Funzioni
 
@@ -409,7 +424,7 @@ def parse_paf(paf_file, min_anchor_len=20, min_hit_len=20, boundary_margin=5):
             if is_overlapping(fields,min_anchor_len, min_hit_len, boundary_margin):
                 
                 if read_id not in read_d:
-                    read_d[read_id] = Read(fields)    
+                    read_d[read_id] = Read(fields)
                                 
                 read_d[read_id].add_coordinates(fields, boundary_margin)
     
@@ -459,12 +474,56 @@ def add_seqs_to_read_dict(read_dict, reads, temp_dir):
         with open(f'{temp_dir}/anchors.{side}.fasta', 'w') as fasta_handle:
             SeqIO.write(fasta_out[side], fasta_handle, 'fasta')
 
+
+
+def cluster_anchors(read_d, l):
+    """_summary_
+
+    Args:
+        read_d (_type_): _description_
+        l (_type_): _description_
+    """
     
-                       
+    def group_strings_by_value(dictionary):
+        """ Group a dictionary by values. Used here to cluster sequences by exact identity
+        
+        Args:
+            dictionary (dict): keys are sequence IDs, values are sequences.
+
+        Returns:
+            dict: keys are sequences, values are sequence IDs
+        """
+
+        grouped = {}
+        for key, values in dictionary.items():
+            for value in values:
+                grouped.setdefault(value, []).append(key)
+        return grouped
+    
+    # Clustering, separate for 5' and 3'
+    
+    identifiers_5 = {}
+    identifiers_3 = {}
+
+    for read_id in read_d:
+        for rec in read_d[read_id].anchor_seq:
+            
+            seq = str(rec.seq)
+            seq_id = rec.id
+            
+            if read_d[read_id].side == '5':
+                identifiers_5.setdefault(seq_id, []).append(seq[-l:])
+            
+            elif read_d[read_id].side == '3':
+                identifiers_3.setdefault(seq_id, []).append(seq[:l])
+                
+    clusters_5 = group_strings_by_value(identifiers_5)
+    clusters_3 = group_strings_by_value(identifiers_3)
+    
+    return clusters_5, clusters_3
 
 
-
-def cd_hit(fasta_path, output_path):
+def cd_hit(fasta_path, output_path, min_id = 0.99, ap=False):
     
     """
     Run cd-hit-est on a fasta file of anchor sequences and return a dictionary
@@ -488,10 +547,14 @@ def cd_hit(fasta_path, output_path):
         'cd-hit-est',
         '-i', fasta_path,
         '-d', '0',
-        '-c', '0.95',
+        '-c', str(min_id),
         '-o', output_path,
-        '-sc', '1'
+        '-sc', '1', 
+        '-g', '1'
         ]
+        
+    if ap:
+        cd_hit += ['-ap', '1']  # Doesn't seem to do anything...
         
     subprocess.run(cd_hit, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
@@ -511,6 +574,35 @@ def cd_hit(fasta_path, output_path):
     return clusters
 
 
+def lm(target, features):
+    """
+    Perform linear regression on depth and positions data.
+
+    This function fits a linear regression model to the given depth and positions
+    data, and returns the intercept and slope of the fitted line.
+
+    Parameters
+    ----------
+    depth : array-like
+        The independent variable data (e.g., depth values).
+    positions : array-like
+        The dependent variable data (e.g., position values).
+
+    Returns
+    -------
+    intercept : float
+        The y-intercept of the regression line.
+    slope : float
+        The slope of the regression line.
+    """
+
+    m = LinearRegression()
+    m.fit(features,target)
+    intercept = round(float(m.intercept_),2)
+    slope = round(float(m.coef_[0]),2)
+    return intercept, slope
+    
+
 def parse_clusters(read_d,temp_dir, args):
     
     """
@@ -523,6 +615,8 @@ def parse_clusters(read_d,temp_dir, args):
 
     Parameters
     ----------
+    read_d : dict
+        A dictionary where keys are read IDs and values are Read objects.
     temp_dir : str
         Path to the temporary directory where intermediate files are stored.
     args : class
@@ -536,14 +630,22 @@ def parse_clusters(read_d,temp_dir, args):
     """
 
     anchor_clusters = {'5':{}, '3':{}}
+    fasta_handle = open(f'{temp_dir}/anchor_consensi.fasta', 'w')
 
     for side in anchor_clusters:
         
+        # Run cd-hit
         clusters = cd_hit(
             f'{temp_dir}/anchors.{side}.fasta', 
-            f'{temp_dir}/cd_hit_{side}')
+            f'{temp_dir}/cd_hit_{side}',
+            args.cluster_identity, args.ap
+            )
         
+        # Create AnchorCluster objects from cd-hit clusters
         for cluster_id in clusters:
+            
+            if len(clusters[cluster_id]) < args.min_cluster_size:
+                continue
             
             anchor_cluster = AnchorCluster(cluster_id, side)
             
@@ -551,10 +653,20 @@ def parse_clusters(read_d,temp_dir, args):
                 read_id = read[:-2]
                 read_index = int(read[-1])
                 anchor_rec = read_d[read_id].anchor_seq[read_index]
-                anchor_cluster.append(anchor_rec)
+                
+                anchor_cluster.seqs.append(anchor_rec)
+                anchor_cluster.reads.append(read_id)
                 
             anchor_cluster.align_anchor_reads(temp_dir, args)
             anchor_cluster.get_cluster_consensus(temp_dir)
+            anchor_cluster.summarize_IS_coordinates(read_d)
             anchor_clusters[side][cluster_id] = anchor_cluster
+            
+            if len(anchor_cluster.consensus) > args.min_anchor_length:
+                SeqIO.write(anchor_cluster.consensus, fasta_handle, 'fasta')
         
     return anchor_clusters
+
+
+
+

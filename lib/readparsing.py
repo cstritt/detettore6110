@@ -11,6 +11,238 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
 
+class Read:
+    """ 
+    Class for reads that reach into the target IS. 
+    Storing information for both the anchor part and the
+    part mapping against the IS. 
+    
+    """
+    def __init__(self, read_id):
+        """
+        Initialize a Read object with a read ID.
+        
+        Parameters
+        ----------
+        read_id : str
+            ID of the read
+            
+        """
+        self.read_id = read_id
+        self.paf_rows = []  # To investigate secondary mappings
+        
+        self.anchor_coordinates = []
+        self.target_coordinates = []
+        
+        self.anchor_seq = []
+        self.target_seq = []
+    
+    def add_coordinates(self, paf_row, boundary_margin):
+        """
+        Add the coordinates of the anchor and the IS to the object, given a paf row.
+        Use lists, since there might be multiple mappings
+        
+        Parameters
+        ----------
+        paf_row : list
+            A list of strings, where each element is a field from a paf row.
+            
+        """
+        self.paf_rows.append(paf_row)
+        
+        # Anchor part (read part that does not map against IS)
+        query_start = int(paf_row[2])
+        query_end = int(paf_row[3])
+        query_len = int(paf_row[1])
+        self.query_strand = paf_row[4]
+        
+        not_mapping = set(range(query_len)) - set(range(query_start, query_end))
+
+        anchor_start = min(list(not_mapping))
+        anchor_end = max(list(not_mapping))
+        self.anchor_coordinates.append((anchor_start, anchor_end))
+
+        # IS part
+        target_start = int(paf_row[7])
+        target_end = int(paf_row[8])
+        target_len = int(paf_row[6])
+        
+        # To which side of the IS does the read map? 
+        # Assuming that the start and end of the element are the same in the reads 
+        # as in the provided sequence           
+        if target_start <= boundary_margin:
+            self.side = '5'
+        elif target_end >= target_len - boundary_margin:
+            self.side = '3'
+        else:
+            print('Check IS boundary conditions:', self.read_id, target_start, target_end)
+        
+        # Part of the IS covered by the read
+        self.target_coordinates.append((target_start, target_end))
+        
+
+    def add_sequences(self, read):
+        
+        """
+        Add sequences of the anchor and target parts to the read.
+        
+        Parameters
+        ----------
+        read : SeqRecord
+            The read from which to extract the sequences.
+        """
+        for i, anchor in enumerate(self.anchor_coordinates):
+             
+            target = self.target_coordinates[i]
+            
+            anchor_start, anchor_end = anchor
+            target_start, target_end = target
+            
+            # Reorient reads such that they all begin with the IS overlapping part
+            # This will allow more stric clustering with cd-hiz-est (-ap)
+            anchor_seq = read.seq[anchor_start:anchor_end+1]
+            read_id = f'{read.id}_{i}'
+            
+            if self.query_strand == '-':
+                anchor_seq = anchor_seq.reverse_complement()                
+                        
+            self.anchor_seq.append(
+                SeqRecord(
+                    anchor_seq,
+                    id=read_id,
+                    name = '',
+                    description=f'{anchor_start}-{anchor_end}'
+                )    
+            )
+            
+            self.target_seq.append(
+                SeqRecord(
+                    read.seq[target_start:target_end+1],
+                    id=f'{read.id}_{i}',
+                    name = '',
+                    description=f'{target_start}-{target_end}'
+                    )
+                )
+
+
+def parse_paf(paf_file, min_anchor_len=20, min_hit_len=20, boundary_margin=5):
+    
+    """  Traverse IS alignment to extract coordinates of IS and anchor read parts.
+ 
+    Output a dictionary with read IDs, containing info about both the anchor and the IS part. 
+     
+    Complications:
+        - nested insertions
+        - close-by insertions
+    """
+    
+    def is_overlapping(paf_row, min_anchor_len, min_hit_len, boundary_margin):
+        """ 
+        Test if read reaches into IS. 
+        """
+        read_len = int(paf_row[1])
+        aln_len = int(paf_row[10])
+        
+        # Alignment too short
+        if aln_len < min_hit_len:
+            return False
+        
+        # Anchor part too short or read entirely in IS
+        if (read_len - aln_len) < min_anchor_len:
+            return False
+        
+        # Read do not map into IS, with margin of n bp
+        target_start = int(paf_row[7])
+        target_end = int(paf_row[8])
+        target_len = int(paf_row[6])
+        
+        if not ( (target_start < boundary_margin) or (target_end > (target_len - boundary_margin)) ):
+            return False
+        
+        else:
+            return True
+
+    read_d = {}
+
+    with open(paf_file) as f:
+        
+        for line in f:
+            
+            fields = line.strip().split('\t')
+            query_len = int(fields[1])
+            aln_len = int(fields[10])
+            
+            if (query_len - aln_len) < min_anchor_len:  # anchor not long enough
+                continue
+            
+            if aln_len < min_hit_len:  # IS part not long enought
+                continue
+            
+            read_id = fields[0]
+            
+            if is_overlapping(fields,min_anchor_len, min_hit_len, boundary_margin):
+                
+                if read_id not in read_d:
+                    read_d[read_id] = Read(fields)
+                                
+                read_d[read_id].add_coordinates(fields, boundary_margin)
+    
+    return read_d
+
+
+
+
+
+def add_seqs_to_read_dict(read_dict, reads, temp_dir):
+    
+    """
+    Add sequences from FASTQ files to the read dictionary and optionally write them to FASTA files.
+
+    This function processes a list of FASTQ files, extracting sequences for
+    reads present in the provided read dictionary. The sequences are added to
+    each read's corresponding entry in the dictionary. Optionally, the function
+    can write the sequences to separate FASTA files for each side ('5' and '3').
+
+    Parameters
+    ----------
+    read_dict : dict
+        A dictionary where keys are read IDs and values are Read objects.
+    reads : list
+        A list of paths to FASTQ files containing the reads.
+    temp_dir : str
+        The path to the temporary directory where FASTA files will be written.
+
+    """
+
+    fasta_out = {
+        '5' : [],
+        '3' : [] 
+        }
+    
+    for fastq in reads:
+    
+        with gzip.open(fastq, "rt") as fastq_handle:
+        
+            for read in SeqIO.parse(fastq_handle, "fastq"):
+                
+                if read.id in read_dict:
+                    read_dict[read.id].add_sequences(read)
+             
+                    side = read_dict[read.id].side
+                    for anchor_seq in read_dict[read.id].anchor_seq:
+                        fasta_out[side].append(anchor_seq)
+
+    for side in fasta_out:              
+        with open(f'{temp_dir}/anchors.{side}.fasta', 'w') as fasta_handle:
+            SeqIO.write(fasta_out[side], fasta_handle, 'fasta')
+
+
+
+
+
+
+
+
 def mapreads(fastq, ref, outpref, outpath, outfmt, cpus=1, k=15, m=40):
     """ Map Illumina reads against a reference. 
 

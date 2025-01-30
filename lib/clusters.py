@@ -1,46 +1,40 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+
 import os
+import pysam
 import subprocess
+import sys
 
 from Bio import SeqIO
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
 from Bio import AlignIO
 from Bio.Align import AlignInfo
 from collections import Counter
+from sklearn.linear_model import LinearRegression
+
+from collections import Counter
+
 
 
 class AnchorCluster:
 
-    def __init__(self, cluster_nr, side):
+    def __init__(self,cluster_nr, side):
         """
-        Initialize an AnchorCluster instance with a cluster number and side. 
-        Side refers to whether the reads map to the 5' or 3' side of the IS 
-        target.
+        Initialize an AnchorCluster instance with a cluster number and side.
 
         Parameters
         ----------
-        cluster_nr : int
-            The cluster number for this anchor cluster.
-        side : str
-            The side (either '5' or '3') of the anchor cluster.
+        cluster_nr : intipython
         """
 
         self.cluster_nr = cluster_nr
         self.side = side
         self.cluster_id = f'{side}prime_{cluster_nr}'
         self.reads = []
-    
-    def add_read(self, read_id, read_dict):
-        """
-        Add a read to the AnchorCluster instance.
-        
-        Parameters
-        ----------
-        read_id : str
-            ID of the read to add.
-        read_dict : dict
-            Dictionary with read IDs as keys and anchor sequences as values.
-        """
-        anchor_rec = read_dict[read_id].anchor
-        self.reads.append(anchor_rec)
+        self.seqs = []
     
     def align_anchor_reads(self, temp_dir, args):
         
@@ -58,21 +52,52 @@ class AnchorCluster:
         alignment_path = os.path.join(temp_dir, f'{self.cluster_id}.aligned.fasta')
         
         with open(fasta_path, 'w') as fasta_handle:
-            SeqIO.write(self.reads, fasta_handle, 'fasta')
+            SeqIO.write(self.seqs, fasta_handle, 'fasta')
         
         mafft_cmd = [
             'mafft',
-            '--thread', args.cpus,
+            '--thread', str(args.cpus),
             '--adjustdirection',
             fasta_path
             ]
         
-        subprocess.run(mafft_cmd, check=True, stdout=open(alignment_path, 'w'), stderr=subprocess.DEVNULL)
-               
+        subprocess.run(mafft_cmd, check=True, 
+                    stdout=open(alignment_path, 'w'), 
+                    stderr=subprocess.DEVNULL)
+        
+        os.remove(fasta_path)
+        
+        
+    def summarize_IS_coordinates(self, read_d):
+        """ Go through reads and store which positions of the IS are covered
+        """
+        
+        self.target_cov = {}
+        for read_id in self.reads:
+            
+            read = read_d[read_id]
+            for coords in read.target_coordinates:
+                start, end = coords
+                for i in range(start, end+1):
+                    if i not in self.target_cov:
+                        self.target_cov[i] = 0
+                    self.target_cov[i] += 1
+                
+        depth = [self.target_cov[i] for i in self.target_cov]
+        
+        pos = [[i] for i in self.target_cov]  # sort and use index rather than actual position
+        
+        self.target_lm = lm(depth, pos)
+                
+
     def get_cluster_consensus(self, temp_dir):
         
         """
         Compute the consensus sequence for the cluster based on alignment.
+        
+        To assess the quality of the cluster, fit an lm(coverage~position). 
+        Slope and intercept show if the coverage is increasing or decreasing as 
+        expected, or if the cluster is messy and no trend in coverage is there.
 
         This method reads the alignment from a given file, calculates the
         consensus sequence, and determines the proportion of sites with
@@ -100,8 +125,7 @@ class AnchorCluster:
             Proportion of sites with mismatches in the alignment.
         """
         
-        alignment_path = os.path.join(
-            temp_dir, f'{self.cluster_id}.aligned.fasta')
+        alignment_path = os.path.join(temp_dir, f'{self.cluster_id}.aligned.fasta')
 
         aln = AlignIO.read(open(alignment_path), "fasta")
         aln_smry = AlignInfo.SummaryInfo(aln)
@@ -112,21 +136,29 @@ class AnchorCluster:
         consensus = ''
         n_sites_with_mismatches = 0
         
+        # For linear model
+        depth = []
+        position = []
+        
         for i in range(self.aln_len):
             col = aln_smry.get_column(i)
             count_missing = col.count('-')
             count_present = self.nr_reads - count_missing
             
+            depth.append(count_present)
+            position.append([i+1])
+            
             # Check on which side the "tail" of the alignment is
             if i == 0:
                 self.depth_start = count_present
             if i == (self.aln_len-1):
-                self.epth_end = count_present         
+                self.depth_end = count_present         
             
             # Get consensus base
             if count_present >= 3:
-                counter = Counter(col.replace('-', ''))
+                counter = Counter(col.replace('-', ''))  # don't! Majority can be gap
                 base = counter.most_common(1)[0][0]
+                
                 if len(counter) > 1:
                     n_sites_with_mismatches += 1
             else:
@@ -134,18 +166,78 @@ class AnchorCluster:
                 
             consensus += base
         
-        self.consensus = consensus.strip('-').upper()
+        consensus = consensus.strip('-').upper()
+        
         self.prop_sites_with_mismatches = round(n_sites_with_mismatches / self.aln_len, 2)
+
+        self.consensus = SeqRecord(
+            Seq(consensus),
+            id=self.cluster_id,
+            name = '',
+            description=''
+            )
         
-    def find_reference_position(self):
-        """ Map cluster consensi against reference.  
-        
-        
-        """
+        self.anchor_lm = lm(depth, position)
+
+    def add_reference_coordinates(self):
         pass
         
         
-def cd_hit(fasta_path, output_path):
+        
+        
+        
+        
+        
+        
+        
+def cluster_anchors(read_d, l):
+    """_summary_
+
+    Args:
+        read_d (_type_): _description_
+        l (_type_): _description_
+    """
+    
+    def group_strings_by_value(dictionary):
+        """ Group a dictionary by values. Used here to cluster sequences by exact identity
+        
+        Args:
+            dictionary (dict): keys are sequence IDs, values are sequences.
+
+        Returns:
+            dict: keys are sequences, values are sequence IDs
+        """
+
+        grouped = {}
+        for key, values in dictionary.items():
+            for value in values:
+                grouped.setdefault(value, []).append(key)
+        return grouped
+    
+    # Clustering, separate for 5' and 3'
+    
+    identifiers_5 = {}
+    identifiers_3 = {}
+
+    for read_id in read_d:
+        for rec in read_d[read_id].anchor_seq:
+            
+            seq = str(rec.seq)
+            seq_id = rec.id
+            
+            if read_d[read_id].side == '5':
+                identifiers_5.setdefault(seq_id, []).append(seq[-l:])
+            
+            elif read_d[read_id].side == '3':
+                identifiers_3.setdefault(seq_id, []).append(seq[:l])
+                
+    clusters_5 = group_strings_by_value(identifiers_5)
+    clusters_3 = group_strings_by_value(identifiers_3)
+    
+    return {'5':clusters_5, '3':clusters_3}
+
+
+def cd_hit(fasta_path, output_path, min_id = 0.99, ap=False):
     
     """
     Run cd-hit-est on a fasta file of anchor sequences and return a dictionary
@@ -169,10 +261,14 @@ def cd_hit(fasta_path, output_path):
         'cd-hit-est',
         '-i', fasta_path,
         '-d', '0',
-        '-c', '0.95',
+        '-c', str(min_id),
         '-o', output_path,
-        '-sc', '1'
+        '-sc', '1', 
+        '-g', '1'
         ]
+        
+    if ap:
+        cd_hit += ['-ap', '1']  # Doesn't seem to do anything...
         
     subprocess.run(cd_hit, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
@@ -192,7 +288,36 @@ def cd_hit(fasta_path, output_path):
     return clusters
 
 
-def parse_clusters(temp_dir, args):
+def lm(target, features):
+    """
+    Perform linear regression on depth and positions data.
+
+    This function fits a linear regression model to the given depth and positions
+    data, and returns the intercept and slope of the fitted line.
+
+    Parameters
+    ----------
+    depth : array-like
+        The independent variable data (e.g., depth values).
+    positions : array-like
+        The dependent variable data (e.g., position values).
+
+    Returns
+    -------
+    intercept : float
+        The y-intercept of the regression line.
+    slope : float
+        The slope of the regression line.
+    """
+
+    m = LinearRegression()
+    m.fit(features,target)
+    intercept = round(float(m.intercept_),2)
+    slope = round(float(m.coef_[0]),2)
+    return intercept, slope
+    
+
+def parse_clusters(read_d, anchor_clusters, temp_dir, args):
     
     """
     Parse clusters of anchor sequences and compute their consensus.
@@ -204,6 +329,8 @@ def parse_clusters(temp_dir, args):
 
     Parameters
     ----------
+    read_d : dict
+        A dictionary where keys are read IDs and values are Read objects.
     temp_dir : str
         Path to the temporary directory where intermediate files are stored.
     args : class
@@ -216,23 +343,117 @@ def parse_clusters(temp_dir, args):
         keyed by cluster IDs.
     """
 
-    anchor_clusters = {'5':{}, '3':{}}
+    cluster_d = {'5':{}, '3':{}}
+    fasta_handle = open(f'{temp_dir}/anchor_consensi.fasta', 'w')
 
     for side in anchor_clusters:
         
-        clusters = cef.cd_hit(
-            f'{temp_dir}/anchors.{side}.fasta', 
-            f'{temp_dir}/cd_hit_{side}')
+        n = 0
         
-        for cluster_id in clusters:
+        for seq in anchor_clusters[side]:
             
-            anchor_cluster = cef.AnchorCluster(cluster_id, side)
+            # Skip short clusters
+            if len(anchor_clusters[side][seq]) < args.min_cluster_size:
+                continue
             
-            for read in clusters[cluster_id]:
-                anchor_cluster.add_read(read, read_dict)  ### ambiguous read_dict!
+            ac = AnchorCluster(n, side)
+            
+            for read in anchor_clusters[side][seq]: 
+                read_id = read[:-2]
+                read_index = int(read[-1])
+                anchor_rec = read_d[read_id].anchor_seq[read_index]
+                    
+                ac.seqs.append(anchor_rec)
+                ac.reads.append(read_id)
                 
-            anchor_cluster.align_anchor_reads(temp_dir, args)
-            anchor_cluster.get_cluster_consensus(temp_dir)
-            anchor_clusters[side][cluster_id] = anchor_cluster
+            ac.align_anchor_reads(temp_dir, args)
+            ac.get_cluster_consensus(temp_dir)
+            ac.summarize_IS_coordinates(read_d)
+            cluster_d[side][n] = ac
+                
+            if len(ac.consensus) > args.min_anchor_len:
+                SeqIO.write(ac.consensus, fasta_handle, 'fasta')
         
-    return anchor_clusters
+            n += 1
+            
+    fasta_handle.close()
+                
+    return cluster_d
+
+
+def find_overlaps(ref_aligned_anchors, tsd_len):
+    
+    """
+    Find overlapping reads in a given sorted BAM file.
+
+    Parameters
+    ----------
+    ref_aligned_anchors : str
+        Path to the sorted BAM file containing anchor reads aligned to the reference.
+    tsd_len : list
+        List of possible target site duplication lengths.
+
+    Returns
+    -------
+    overlaps : list
+        List of tuples containing read IDs, start and end coordinates of overlapping reads,
+        and the length of the overlap.
+    """
+    pybam = pysam.AlignmentFile(ref_aligned_anchors, "rb")
+    read_ids = []
+    coordinates = []
+
+    for read in pybam.fetch():
+        read_ids.append(read.query_name)
+        coordinates.append((read.reference_start, read.reference_end))
+    pybam.close()
+
+    overlaps = []
+    for i in range(len(coordinates)):
+        for j in range(i + 1, len(coordinates)):
+            start1, end1 = coordinates[i]
+            start2, end2 = coordinates[j]
+            overlap = end1 - start2
+            if overlap in tsd_len:
+                overlaps.append((read_ids[i], end1, read_ids[j], start2, overlap))
+                
+    return overlaps
+
+
+def write_results(cluster_d, args, temp_dir):
+    
+    out = {'5':[],'3':[]}
+
+    #outhandle = open(os.path.join(temp_dir, 'anchors_resultati.tsv'), 'w')
+
+    header = [
+        'cluster_id', 'side', 'num_reads', 
+        'anchor_slope', 'anchor_intercept', 
+        'target_start', 'target_end', 'target_slope', 'target_intercept',
+        'prop_sites_with_mismatches', 'consensus_len', 'consensus']
+    
+    sys.stdout.write('\t'.join(header) + '\n')
+
+    #outhandle.write('\t'.join(header) + '\n')
+
+    for side in cluster_d:
+ 
+        for cluster_id in cluster_d[side]:
+            cl = cluster_d[side][cluster_id]
+            target_pos = [i for i in cl.target_cov]
+            
+            if len(cl.consensus) < args.min_anchor_len:
+                continue
+                        
+            row = [cl.cluster_id, side, cl.nr_reads, 
+                cl.anchor_lm[1], cl.anchor_lm[0], 
+                min(target_pos), max(target_pos), cl.target_lm[1], cl.target_lm[0],
+                cl.prop_sites_with_mismatches, 
+                len(cl.consensus), str(cl.consensus.seq)]
+            
+            sys.stdout.write('\t'.join(map(str, row)) + '\n')
+            
+            out[side].append(row)
+            
+    return out       
+    #outhandle.close()
