@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-
 import os
 import pysam
 import subprocess
@@ -16,7 +15,6 @@ from collections import Counter
 from sklearn.linear_model import LinearRegression
 
 from collections import Counter
-
 
 
 class AnchorCluster:
@@ -179,16 +177,25 @@ class AnchorCluster:
         
         self.anchor_lm = lm(depth, position)
 
-    def add_reference_coordinates(self):
-        pass
+    def add_reference_coordinates(self, ref_d):
+        if self.cluster_id in ref_d:
+            read = ref_d[self.cluster_id]
+            self.ref = read.reference_name
+            self.ref_start = read.reference_start
+            self.ref_end = read.reference_end
+            self.ref_strand = '-' if read.is_reverse else '+'
+            self.ref_cigar = read.cigarstring
+            self.ref_mapq = read.mapping_quality
+        else:
+            self.ref = 'NA'
+            self.ref_start = 'NA'
+            self.ref_end = 'NA'
+            self.ref_strand = 'NA'
+            self.ref_cigar = 'NA'
+            self.ref_mapq = 'NA'
+   
         
-        
-        
-        
-        
-        
-        
-        
+       
         
 def cluster_anchors(read_d, l):
     """_summary_
@@ -420,40 +427,35 @@ def find_overlaps(ref_aligned_anchors, tsd_len):
     return overlaps
 
 
-def write_results(cluster_d, args, temp_dir):
+
+def add_ref_coordinates_to_clusters(cluster_d, ref_aligned_anchors):
     
-    out = {'5':[],'3':[]}
+    """
+    Add reference coordinates to AnchorCluster objects from a sorted BAM file.
 
-    #outhandle = open(os.path.join(temp_dir, 'anchors_resultati.tsv'), 'w')
+    Parameters
+    ----------
+    cluster_d : dict
+        Dictionary containing AnchorCluster objects for both 5' and 3' sides,
+        keyed by cluster IDs.
+    ref_aligned_anchors : str
+        Path to the sorted BAM file containing anchor reads aligned to the reference.
 
-    header = [
-        'cluster_id', 'side', 'num_reads', 
-        'anchor_slope', 'anchor_intercept', 
-        'target_start', 'target_end', 'target_slope', 'target_intercept',
-        'prop_sites_with_mismatches', 'consensus_len', 'consensus']
+    Returns
+    -------
+    None
+
+    """
     
-    sys.stdout.write('\t'.join(header) + '\n')
+    pybam = pysam.AlignmentFile(ref_aligned_anchors, "rb")
+    
+    ref_d = {}
 
-    #outhandle.write('\t'.join(header) + '\n')
-
+    for read in pybam.fetch():
+        ref_d[read.query_name] = read
+    pybam.close()
+    
     for side in cluster_d:
- 
         for cluster_id in cluster_d[side]:
-            cl = cluster_d[side][cluster_id]
-            target_pos = [i for i in cl.target_cov]
-            
-            if len(cl.consensus) < args.min_anchor_len:
-                continue
-                        
-            row = [cl.cluster_id, side, cl.nr_reads, 
-                cl.anchor_lm[1], cl.anchor_lm[0], 
-                min(target_pos), max(target_pos), cl.target_lm[1], cl.target_lm[0],
-                cl.prop_sites_with_mismatches, 
-                len(cl.consensus), str(cl.consensus.seq)]
-            
-            sys.stdout.write('\t'.join(map(str, row)) + '\n')
-            
-            out[side].append(row)
-            
-    return out       
-    #outhandle.close()
+            cluster_d[side][cluster_id].add_reference_coordinates(ref_d)
+

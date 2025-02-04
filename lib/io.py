@@ -65,7 +65,7 @@ def gene_overlap(position, annotation, chromosome_length):
     idx_e = bisect.bisect_right(annotation['end'], position)
     
     # Overlapping feature
-    if idx_e == idx_s - 1:
+    if (idx_e == idx_s - 1) or (idx_e == idx_s -2):
                 
         gene_info = gene_id_regex(
             regex_patterns, annotation['attributes'][idx_e])
@@ -119,12 +119,65 @@ def gene_id_regex(patterns, gff_attributes):
             return match.group(1)
 
 
+def write_cluster_output(cluster_d, args):
+    
+    """
+    Write output for anchor clusters to stdout.
 
-def write_cluster_output():
-    pass
+    Parameters
+    ----------
+    cluster_d : dict
+        Dictionary containing AnchorCluster objects for both 5' and 3' sides,
+        keyed by cluster IDs.
+    args : class
+        Input arguments containing parameters such as the minimum anchor length
+        and whether to include reference coordinates.
+    temp_dir : str
+        Path to the temporary directory where intermediate files are stored.
+
+    Returns
+    -------
+    out : dict
+        A dictionary containing the output for each anchor cluster, keyed by
+        side ('5' or '3').
+
+    """
+    outhandle = open(os.path.join(args.outpath, f'{args.prefix}.anchors.tsv'), 'w')
+
+    header = [
+        'anchor_id', 'side', 'num_reads', 
+        #'anchor_slope', 'anchor_intercept', 
+        'target_start', 'target_end', 
+        #'target_slope', 'target_intercept',
+        'prop_sites_with_mismatches', 'consensus_len', 'consensus']
+    
+    if args.reference:
+        header += ['ref', 'ref_start', 'ref_end', 'ref_strand', 'ref_cigar', 'ref_mapq']
+    
+    outhandle.write('\t'.join(header) + '\n')
+
+    for side in cluster_d:
+ 
+        for cluster_id in cluster_d[side]:
+            cl = cluster_d[side][cluster_id]
+            target_pos = [i for i in cl.target_cov]
+                       
+            row = [cl.cluster_id, side, cl.nr_reads, 
+                #cl.anchor_lm[1], cl.anchor_lm[0], 
+                min(target_pos), max(target_pos), 
+                #cl.target_lm[1], cl.target_lm[0],
+                cl.prop_sites_with_mismatches, 
+                len(cl.consensus), str(cl.consensus.seq)]
+            
+            if args.reference:
+                row += [cl.ref, cl.ref_start, cl.ref_end, cl.ref_strand, cl.ref_cigar, cl.ref_mapq]
+                
+            outhandle.write('\t'.join(map(str, row)) + '\n')
+                        
+    outhandle.close()
 
 
-def write_reference_output(args, overlaps, cluster_d, outpath):
+def write_reference_output(overlaps, cluster_d, args):
     
     """
     Write the reference output with insertion details to a file or stdout.
@@ -150,8 +203,7 @@ def write_reference_output(args, overlaps, cluster_d, outpath):
     None
     """
 
-    if args.outfile:
-        outhandle = open(args.outfile, 'w')
+    outhandle = open(os.path.join(args.outpath, f'{args.prefix}.reference_insertions.tsv'), 'w')
         
     header = ['chromosome', 'position', 'strand', 'support_5', 'support_3', 'TSD']
     
@@ -168,17 +220,14 @@ def write_reference_output(args, overlaps, cluster_d, outpath):
         annot = annot.reset_index(drop=True)
         
     # Get chromosome length
-    reference = SeqIO.read(args.ref, 'fasta')
+    reference = SeqIO.read(args.reference, 'fasta')
     chrom_length = len(reference.seq)
-    
-    headerstr = '\t'.join(header) + '\n'
-    outhandle.write(headerstr) if args.outfile else sys.stdout.write(headerstr)
+    outhandle.write('\t'.join(header) + '\n')
     
     # Get chromosome name, assuming that the reference is a single contig    
-    chromosomes = [seq_record.id for seq_record in SeqIO.parse(args.ref, 'fasta')]
+    chromosomes = [seq_record.id for seq_record in SeqIO.parse(args.reference, 'fasta')]
     chrom = chromosomes[0]
 
-    
     # Now loop through identified mutations 
     for ins in overlaps:
 
@@ -208,14 +257,10 @@ def write_reference_output(args, overlaps, cluster_d, outpath):
             
         outline = map(str, outline)
 
-        if args.outfile:
-            outhandle.write('\t'.join(outline) + '\n')
+
+        outhandle.write('\t'.join(outline) + '\n')
         
-        else:
-            sys.stdout.write('\t'.join(outline) + '\n')
-    
-    if args.outfile:    
-        outhandle.close()
+    outhandle.close()
 
 
 
@@ -288,7 +333,7 @@ def write_output(args, clusters, copy_number, outpath,
         annot = annot.reset_index(drop=True)
         
     # Get chromosome length
-    reference = SeqIO.read(args.ref, 'fasta')
+    reference = SeqIO.read(args.reference, 'fasta')
     chrom_length = len(reference.seq)
     
     headerstr = '\t'.join(header)
@@ -297,7 +342,7 @@ def write_output(args, clusters, copy_number, outpath,
     
 
     # Get chromosome name, assuming that the reference is a single contig    
-    chromosomes = [seq_record.id for seq_record in SeqIO.parse(args.ref, 'fasta')]
+    chromosomes = [seq_record.id for seq_record in SeqIO.parse(args.reference, 'fasta')]
     CHROM = chromosomes[0]
 
     for i, c in enumerate(clusters):
