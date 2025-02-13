@@ -10,3 +10,5 @@ testing/some_reads.bam.bai
 testing/clustering
 tmp*
 .vscode
+exploration/
+debugging/

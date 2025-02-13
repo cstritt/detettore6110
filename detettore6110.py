@@ -14,12 +14,19 @@ from lib import clusters
 def get_args():
 
     parser = argparse.ArgumentParser(
-        description='Infer insertion sequence polymorphisms from short-read \
-            sequencing data. Default values in [].'
+        prog = 'dettetore6110.py',
+        formatter_class = argparse.ArgumentDefaultsHelpFormatter,
+        
+        description="""
+        Infer insertion sequence polymorphisms and copy numbers \
+        from short-read sequencing data.\n""",
+        
+        epilog="""
+        Example usage: """
         )
 
-    parser_input = parser.add_argument_group('INPUT / OUTPUT')
-    parser_settings = parser.add_argument_group('PROGRAM SETTINGS')
+    parser_input = parser.add_argument_group('Input/Output')
+    parser_settings = parser.add_argument_group('Parameters')
     path_to_detettore = os.path.dirname(__file__)
     
     # INPUT/OUTPUT
@@ -42,39 +49,39 @@ def get_args():
     parser_input.add_argument(
         "-r", dest="reference",
         default=os.path.join(path_to_detettore, 'resources/reference/MTBC0_v1.1.fasta'),
-        help='Reference genome in fasta format. [resources/reference/MTBC0_v1.1.fasta]')
+        help='Reference genome in fasta format.')
 
     parser_input.add_argument(
         "-a", dest="annot",
         default=os.path.join(path_to_detettore, 'resources/reference/MTBC0v1.1_PGAP_annot.gff'),
-        help='Gene annotation in gff format. [resources/reference/MTBC0v1.1_PGAP_annot.gff]')
+        help='Gene annotation in gff format.')
     
     
     # OTHER SETTINGS
     parser_settings.add_argument(
         '-al', dest='min_anchor_len',
         type=int, default=20,
-        help='Minimum length of the read part that maps outside the IS. [20]')
+        help='Minimum length of the read part that maps outside the IS.')
 
     parser_settings.add_argument(
         '-hl', dest='min_hit_len',
         type=int, default=20,
-        help='Minimum length of the read part that maps to the IS. [20]')
+        help='Minimum length of the read part that maps to the IS.')
     
     parser_settings.add_argument(
         '-cs', dest='min_cluster_size',
         type=int, default=5,
-        help='Minimum number of anchor reads in a cluster. [5]')
+        help='Minimum number of anchor reads in a cluster.')
     
     parser_settings.add_argument(
         '-tsd', dest='tsd_len',
         nargs='+', type=int, default=[3,4],
-        help='Alowable length of the target site duplication. [3 4]')
+        help='Alowable length of the target site duplication.')
     
     parser_settings.add_argument(
         '-c', dest='cpus',
         type= int, default=4,
-        help='Number of CPUs. [4]')
+        help='Number of CPUs.')
     
     parser_settings.add_argument(
         '--keep', dest='pref', type=str, default=False,
@@ -90,7 +97,6 @@ def main():
     args = get_args()
     
     # Le mise-en-place ########################################################
-
     working_dir = os.getcwd()    
     reads = [os.path.abspath(x) for x in args.reads]
     target = os.path.abspath(args.target)
@@ -106,7 +112,6 @@ def main():
 
 
     # Map reads against IS target ###########################################
-
     readparsing.mapreads(
         reads, target, 'reads_vs_IS', temp_dir, 'paf', args.cpus, k=9, m=10
     )
@@ -125,7 +130,6 @@ def main():
 
 
     # Identify reference positions ##########################################
-
     readparsing.mapreads(
         [f'{temp_dir}/anchor_consensi.fasta'], args.reference, 'reads_vs_ref', temp_dir, 'bam', args.cpus, k=9, m=10
         )

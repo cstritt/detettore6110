@@ -3,7 +3,7 @@
 Dev version, implementing a new, reference-free approach, where insertions are characterized by 
 anchor consensus sequences rather than insertion locations. 
 
-## Install
+# Install
 Clone the repository
 ```{bash}
 git clone https://github.com/cstritt/detettore6110
@@ -17,7 +17,7 @@ cd detettore6110
 conda env create -f environment.yaml -n detettore6110
 ```
 
-## Run 
+# Run 
 The only required input are reads in fastq format. For the reference genome and the IS target (IS6110) the defaults in the resources folder are used if not stated otherwise. 
 
 Below is the simplest way to run detettore, using IS6110 as a target and the imputed ancestor MTBC0 ([Harrison et al. 2024](https://doi.org/10.1099%2Fmgen.0.001165)) as a reference. Writes to stdout if no output file path (-o) is provided.
@@ -26,7 +26,11 @@ Below is the simplest way to run detettore, using IS6110 as a target and the imp
 detettore6110.py reads_1.fq.gz reads_2.fq.gz
 ```
 
-## Output
+# Output
 The first line of the output, starting with #CN, is the IS copy number estimated independently of the reference. This is followed by a header and the table containing the IS insertion sites relative to the reference genome. 
+
+## Anchor sequences
+
+## Reference insertions
 
 At present **only clear split read insertion signatures** are reported. This means that the reference-independent copy number estimate is usually higher than the number of inferred insertion sites, as insertions into complex regions (repeats, SVs, ...) tend to produce more complicated and ambiguous signatures (or none at all). 
