@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-
 import gzip
+import pandas
 import pysam
 import subprocess
+import warnings
 
 from Bio import SeqIO
 from Bio.Seq import Seq
@@ -36,49 +37,54 @@ class Read:
         
         self.anchor_seq = []
         self.target_seq = []
-    
-    def add_coordinates(self, paf_row, boundary_margin):
+            
+    def add_coordinates(self, paf_row):
         """
         Add the coordinates of the anchor and the IS to the object, given a paf row.
         Use lists, since there might be multiple mappings
         
+        In PAF format, the coordinates are 0-based, bed-like, 
+        start closed and end open, meaning that the end coordinate is 
+        not part of the alignment! The same coordinate format is used
+        below and in the add_sequences function.
+                
         Parameters
         ----------
         paf_row : list
             A list of strings, where each element is a field from a paf row.
             
         """
-        self.paf_rows.append(paf_row)
+        self.paf_rows.append(paf_row.tolist())
         
         # Anchor part (read part that does not map against IS)
-        query_start = int(paf_row[2])
-        query_end = int(paf_row[3])
-        query_len = int(paf_row[1])
-        self.query_strand = paf_row[4]
+        self.query_strand = paf_row['strand']
         
-        not_mapping = set(range(query_len)) - set(range(query_start, query_end))
-
-        anchor_start = min(list(not_mapping))
-        anchor_end = max(list(not_mapping))
+        if paf_row['query_start'] == 0:
+            anchor_start = paf_row['query_end']
+            anchor_end = paf_row['query_length']
+            
+        elif paf_row['query_end'] == paf_row['query_length']:
+            anchor_start = 0
+            anchor_end = paf_row['query_start']
+            
+        else:
+            warnings.warn(f'Check anchor coordinates for {paf_row['query_name']}\n')
+            
         self.anchor_coordinates.append((anchor_start, anchor_end))
 
         # IS part
-        target_start = int(paf_row[7])
-        target_end = int(paf_row[8])
-        target_len = int(paf_row[6])
-        
         # To which side of the IS does the read map? 
         # Assuming that the start and end of the element are the same in the reads 
         # as in the provided sequence           
-        if target_start <= boundary_margin:
+        if paf_row['target_start'] == 0:
             self.side = '5'
-        elif target_end >= target_len - boundary_margin:
+        elif paf_row['target_end'] == paf_row['target_length']:
             self.side = '3'
         else:
-            print('Check IS boundary conditions:', self.read_id, target_start, target_end)
+            warnings.warn(f'Check IS boundaries for {paf_row["query_name"].tostring()}')
         
         # Part of the IS covered by the read
-        self.target_coordinates.append((target_start, target_end))
+        self.target_coordinates.append((paf_row['target_start'], paf_row['target_end']))
         
 
     def add_sequences(self, read):
@@ -100,7 +106,7 @@ class Read:
             
             # Reorient reads such that they all begin with the IS overlapping part
             # This will allow more stric clustering with cd-hiz-est (-ap)
-            anchor_seq = read.seq[anchor_start:anchor_end+1]
+            anchor_seq = read.seq[anchor_start:anchor_end]
             read_id = f'{read.id}_{i}'
             
             if self.query_strand == '-':
@@ -117,7 +123,7 @@ class Read:
             
             self.target_seq.append(
                 SeqRecord(
-                    read.seq[target_start:target_end+1],
+                    read.seq[target_start:target_end],
                     id=f'{read.id}_{i}',
                     name = '',
                     description=f'{target_start}-{target_end}'
@@ -125,72 +131,66 @@ class Read:
                 )
 
 
-def parse_paf(paf_file, min_anchor_len=20, min_hit_len=20, boundary_margin=5):
-    
-    """  Traverse IS alignment to extract coordinates of IS and anchor read parts.
- 
-    Output a dictionary with read IDs, containing info about both the anchor and the IS part. 
-     
-    Complications:
-        - nested insertions
-        - close-by insertions
+def parse_paf(paf_file, min_anchor_len, min_hit_len):
+
     """
+    Parse a minimap2 PAF file and return a dictionary of read IDs as keys 
+    and Read objects as values.
     
-    def is_overlapping(paf_row, min_anchor_len, min_hit_len, boundary_margin):
-        """ 
-        Test if read reaches into IS. 
-        """
-        read_len = int(paf_row[1])
-        aln_len = int(paf_row[10])
+    Parameters
+    ----------
+    paf_file : str
+        Path to PAF output of minimap2.
         
-        # Alignment too short
-        if aln_len < min_hit_len:
-            return False
+    min_anchor_len : int
+        Minimum length of the anchor (i.e. the non-aligned read part).
         
-        # Anchor part too short or read entirely in IS
-        if (read_len - aln_len) < min_anchor_len:
-            return False
+    min_hit_len : int
+        Minimum length of the hit (i.e. the aligned part).
         
-        # Read do not map into IS, with margin of n bp
-        target_start = int(paf_row[7])
-        target_end = int(paf_row[8])
-        target_len = int(paf_row[6])
-        
-        if not ( (target_start < boundary_margin) or (target_end > (target_len - boundary_margin)) ):
-            return False
-        
-        else:
-            return True
-
+    Returns
+    -------
+    
+    read_d : dict
+        Dictionary with read IDs as keys and Read objects as values.
+    """
     read_d = {}
-
-    with open(paf_file) as f:
-        
-        for line in f:
-            
-            fields = line.strip().split('\t')
-            query_len = int(fields[1])
-            aln_len = int(fields[10])
-            
-            if (query_len - aln_len) < min_anchor_len:  # anchor not long enough
-                continue
-            
-            if aln_len < min_hit_len:  # IS part not long enought
-                continue
-            
-            read_id = fields[0]
-            
-            if is_overlapping(fields,min_anchor_len, min_hit_len, boundary_margin):
-                
-                if read_id not in read_d:
-                    read_d[read_id] = Read(fields)
-                                
-                read_d[read_id].add_coordinates(fields, boundary_margin)
     
+    paf_header = [
+        'query_name', 'query_length', 'query_start', 'query_end', 'strand',
+        'target_name', 'target_length', 'target_start', 'target_end', 
+        'residue_matches', 'block_length', 'mapping_quality'
+    ]
+
+    paf = pandas.read_csv(paf_file, sep='\t', usecols=range(12), header=None)
+    paf.columns = paf_header
+    
+    for i, row in paf.iterrows():
+        
+        alignment_length = row['query_end'] - row['query_start']
+        
+        # Anchor not long enough or read entirely in IS
+        if (row['query_length'] - alignment_length) < min_anchor_len:  
+            continue
+        
+        # IS part not long enough
+        if alignment_length < min_hit_len: 
+            continue
+        
+        # Alignment does not beginn precisely at start or end of IS
+        if not ((row['target_start'] == 0) or (row['target_end'] == row['target_length'])):
+            continue
+        
+        # Query start or end is not in IS
+        if not ((row['query_start'] == 0) or (row['query_end'] == row['query_length'])):
+            continue
+
+        if row['query_name'] not in read_d:
+            read_d[row['query_name']] = Read(row['query_name'])
+        
+        read_d[row['query_name']].add_coordinates(row)
+
     return read_d
-
-
-
 
 
 def add_seqs_to_read_dict(read_dict, reads, temp_dir):
@@ -235,12 +235,6 @@ def add_seqs_to_read_dict(read_dict, reads, temp_dir):
     for side in fasta_out:              
         with open(f'{temp_dir}/anchors.{side}.fasta', 'w') as fasta_handle:
             SeqIO.write(fasta_out[side], fasta_handle, 'fasta')
-
-
-
-
-
-
 
 
 def mapreads(fastq, ref, outpref, outpath, outfmt, cpus=1, k=15, m=40):

@@ -84,7 +84,7 @@ def get_args():
         help='Number of CPUs.')
     
     parser_settings.add_argument(
-        '--keep', dest='pref', type=str, default=False,
+        '--keep', action = 'store_true',
         help='Keep intermediate files in folder <pref>_tmp.')
 
     args=parser.parse_args()
@@ -101,7 +101,7 @@ def main():
     reads = [os.path.abspath(x) for x in args.reads]
     target = os.path.abspath(args.target)
     temp_dir = tempfile.mkdtemp()
-    atexit.register(io.exit_handler, args, temp_dir, working_dir)
+    atexit.register(io.exit_handler, args, temp_dir)
 
     # Convert input bam/cram to fastq
     read_suffix = set([x.split('.')[-1] for x in reads]).pop()
@@ -117,7 +117,7 @@ def main():
     )
 
     # Create read dictionary
-    read_d = readparsing.parse_paf(f'{temp_dir}/reads_vs_IS.paf')
+    read_d = readparsing.parse_paf(f'{temp_dir}/reads_vs_IS.paf', args.min_anchor_len, args.min_hit_len)
 
     # Add anchor and hit parts of the reads to read dictionary
     readparsing.add_seqs_to_read_dict(read_d, reads, temp_dir)
