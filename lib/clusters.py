@@ -164,7 +164,7 @@ class AnchorCluster:
                 
             consensus += base
         
-        consensus = consensus.strip('-').upper()
+        consensus = consensus.replace('-', '').upper()
         
         self.prop_sites_with_mismatches = round(n_sites_with_mismatches / self.aln_len, 2)
 
@@ -422,10 +422,11 @@ def find_overlaps(ref_aligned_anchors, tsd_len):
             start2, end2 = coordinates[j]
             overlap = end1 - start2
             if overlap in tsd_len:
+                if read_ids[i][0] == read_ids[j][0]:  # make sure reads reach into opposite ends of the IS
+                    continue
                 overlaps.append((read_ids[i], end1, read_ids[j], start2, overlap))
                 
     return overlaps
-
 
 
 def add_ref_coordinates_to_clusters(cluster_d, ref_aligned_anchors):
