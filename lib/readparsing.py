@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import gzip
+import os
 import pandas
 import pysam
 import subprocess
@@ -162,6 +163,10 @@ def parse_paf(paf_file, min_anchor_len, min_hit_len):
         'residue_matches', 'block_length', 'mapping_quality'
     ]
 
+    # Check if file is empty
+    if os.stat(paf_file).st_size == 0:
+        return read_d
+    
     paf = pandas.read_csv(paf_file, sep='\t', usecols=range(12), header=None)
     paf.columns = paf_header
     
