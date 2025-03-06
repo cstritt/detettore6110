@@ -242,7 +242,7 @@ class true_insertions:
             for line in f:
                 fields = line.strip().split('\t')
                 side = fields[1]
-                rec = SeqRecord(Seq(fields[7]), id=fields[0], name='', description='')
+                rec = SeqRecord(Seq(fields[3]), id=fields[0], name='', description='')
                 reclen = len(rec.seq)
                 
                 # Compare against true anchors! Ignore side information for the moment, just try ever combination to figure out what's going on
