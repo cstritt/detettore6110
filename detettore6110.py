@@ -4,9 +4,9 @@
 import argparse
 import atexit
 import os
+import shutil
 import tempfile
 
-from lib import io
 from lib import readparsing
 from lib import clusters
 
@@ -29,7 +29,7 @@ def get_args():
     parser_settings = parser.add_argument_group('Parameters')
     path_to_detettore = os.path.dirname(__file__)
     
-    # INPUT/OUTPUT
+    # Input/Output
     parser_input.add_argument(
         'reads', nargs='+', 
         help='Short reads in fasta/fastq/bam. One file for SE, two files separated by space for PE.')
@@ -56,8 +56,7 @@ def get_args():
         default=os.path.join(path_to_detettore, 'resources/reference/MTBC0v1.1_PGAP_annot.gff'),
         help='Gene annotation in gff format.')
     
-    
-    # OTHER SETTINGS
+    # Parameters
     parser_settings.add_argument(
         '-al', dest='min_anchor_len',
         type=int, default=20,
@@ -70,14 +69,20 @@ def get_args():
     
     parser_settings.add_argument(
         '-cs', dest='min_cluster_size',
-        type=int, default=5,
+        type=int, default=3,
         help='Minimum number of anchor reads in a cluster.')
+    
+    parser_settings.add_argument(
+        '-k', dest='seed_len',
+        type=int, default=20,
+        help='Require k exact matches next to the breakpoint for anchor reads to cluster.')
     
     parser_settings.add_argument(
         '-tsd', dest='tsd_len',
         nargs='+', type=int, default=[3,4],
         help='Alowable length of the target site duplication.')
     
+    # Other settings
     parser_settings.add_argument(
         '-c', dest='cpus',
         type= int, default=4,
@@ -86,62 +91,57 @@ def get_args():
     parser_settings.add_argument(
         '--keep', action = 'store_true',
         help='Keep intermediate files in folder <pref>_tmp.')
+    
+    parser_settings.add_argument(
+        '--detailed', action = 'store_true',
+        help='Provide more detailed output (useful for debugging).')
 
     args=parser.parse_args()
 
     return args
 
 
+def exit_handler(args, temp_dir):
+    """ Cleanup after program finish. If --keep is given, copy contents of 
+    temporary directory to working directory before deleting it"""
+    if args.keep:  # Copy contents of temporary to output directory
+        shutil.copytree(temp_dir, os.path.join(args.outpath, args.prefix + '_intermediate_files'))
+        
+    shutil.rmtree(temp_dir)
+
+
 def main():
     
     args = get_args()
     
-    # Le mise-en-place ########################################################
-    working_dir = os.getcwd()    
-    reads = [os.path.abspath(x) for x in args.reads]
-    target = os.path.abspath(args.target)
+    # Le mise-en-place ######################################################
     temp_dir = tempfile.mkdtemp()
-    atexit.register(io.exit_handler, args, temp_dir)
-
-    # Convert input bam/cram to fastq
-    read_suffix = set([x.split('.')[-1] for x in reads]).pop()
-
-    if len(reads) == 1 and read_suffix in ['bam', 'cram', 'sam']:
-        bamfile = reads[0]        
-        reads = [readparsing.bam_to_fastq(bamfile, f'{temp_dir}/reads.fastq.gz')]
-
-
+    atexit.register(exit_handler, args, temp_dir)
+    target = os.path.abspath(args.target)
+    reads = readparsing.Reads(args, temp_dir)
+    
     # Map reads against IS target ###########################################
-    readparsing.mapreads(
-        reads, target, 'reads_vs_IS', temp_dir, 'paf', args.cpus, k=9, m=10
-    )
+    readparsing.mapreads(reads.fastq, target, 'reads_vs_IS', temp_dir, 'paf', args.cpus, k=9, m=10)  # Map reads against target IS
+    reads.parse_paf(f'{temp_dir}/reads_vs_IS.paf', args.min_anchor_len, args.min_hit_len)  # Extract reads that reach into the IS
+    reads.add_seqs_to_read_dict(reads.fastq, temp_dir)  # Re-traverse reads and extract the anchor sequences
 
-    # Create read dictionary
-    read_d = readparsing.parse_paf(f'{temp_dir}/reads_vs_IS.paf', args.min_anchor_len, args.min_hit_len)
-
-    # Add anchor and hit parts of the reads to read dictionary
-    readparsing.add_seqs_to_read_dict(read_d, reads, temp_dir)
-
-    # Cluster anchors based on exact identity of anchor part adjoining IS
-    anchor_clusters = clusters.cluster_anchors(read_d, args.min_anchor_len)
-
-    # Create cluster dictionary and anchor consensus sequences
-    cluster_d = clusters.parse_clusters(read_d, anchor_clusters, temp_dir, args)
-
+    # Identify anchor clusters ##############################################
+    anchor_clusters = clusters.Clusters(args, temp_dir)
+    anchor_clusters.cluster_anchors(reads, args.seed_len)  # Cluster anchor sequences based on exact identity of anchor part adjoining IS
+    anchor_clusters.parse_clusters(reads)  # Align reads and get anchor consensus sequences
 
     # Identify reference positions ##########################################
-    readparsing.mapreads(
-        [f'{temp_dir}/anchor_consensi.fasta'], args.reference, 'reads_vs_ref', temp_dir, 'bam', args.cpus, k=9, m=10
-        )
+    if args.reference:
+        readparsing.mapreads([f'{temp_dir}/anchor_consensi.fasta'], args.reference, 'anchors_vs_ref', temp_dir, 'bam', args.cpus, k=9, m=10)  # Map anchors against reference
+        readparsing.mapreads(reads.fastq, args.reference, 'reads_vs_ref', temp_dir, 'bam', args.cpus)  # Map all reads against reference
 
-    overlaps = clusters.find_overlaps(f'{temp_dir}/reads_vs_ref.bam', args.tsd_len)
-    clusters.add_ref_coordinates_to_clusters(cluster_d, f'{temp_dir}/reads_vs_ref.bam')
-
-
-    # Write output ##########################################################
-    io.write_cluster_output(cluster_d, args)
-    io.write_reference_output(overlaps, cluster_d, args)
+        anchor_clusters.add_ref_coordinates_to_clusters(f'{temp_dir}/anchors_vs_ref.bam')
+        overlaps = clusters.find_overlaps(f'{temp_dir}/anchors_vs_ref.bam', args.tsd_len)
     
+    # Write output ##########################################################
+    anchor_clusters.write_cluster_output(args)
+    if args.reference:
+        anchor_clusters.write_reference_output(overlaps, f'{temp_dir}/reads_vs_ref.bam', args)
     
 if __name__ == '__main__':
     main()

@@ -54,6 +54,30 @@ def gene_overlap(position, annotation, chromosome_length):
 
     """
     
+    def gene_id_regex(patterns, gff_attributes):
+        """ Extract gene name and locus tag (or any pattern) from the
+        atrribute column of a gff
+        
+        Parameters
+        ----------
+        patterns : list
+            List containing regex patterns to extract.
+        gff_attributes : str
+            Single gff attribute entry.
+
+        Returns
+        -------
+        out : str
+            Matches separated by a comma.
+
+        """
+        
+        for pattern in patterns:
+            match = re.search(pattern, gff_attributes)
+            if match:
+                return match.group(1)
+    
+    
     regex_patterns = [
         r";gene=([^;\n]+)", 
         r"locus_tag=([^;\n]+)", 
@@ -93,30 +117,6 @@ def gene_overlap(position, annotation, chromosome_length):
             dist_to_3 = annotation['start'][idx_s] - position
         
         return [f'{gene_info_5};{gene_info_3}', f'{dist_to_5};{dist_to_3}']
-        
-
-def gene_id_regex(patterns, gff_attributes):
-    """ Extract gene name and locus tag (or any pattern) from the
-    atrribute column of a gff
-    
-    Parameters
-    ----------
-    patterns : list
-        List containing regex patterns to extract.
-    gff_attributes : str
-        Single gff attribute entry.
-
-    Returns
-    -------
-    out : str
-        Matches separated by a comma.
-
-    """
-    
-    for pattern in patterns:
-        match = re.search(pattern, gff_attributes)
-        if match:
-            return match.group(1)
 
 
 def write_cluster_output(cluster_d, args):
@@ -144,16 +144,13 @@ def write_cluster_output(cluster_d, args):
     """
     outhandle = open(os.path.join(args.outpath, f'{args.prefix}.anchors.tsv'), 'w')
 
-    header = [
-        'anchor_id', 'side', 'num_reads', 
-        #'anchor_slope', 'anchor_intercept', 
-        'target_start', 'target_end', 
-        #'target_slope', 'target_intercept',
-        'prop_sites_with_mismatches', 'consensus_len', 'consensus']
+    header = ['anchor_id', 'side', 'num_reads', 'consensus']
     
-    if args.reference:
-        header += ['ref', 'ref_start', 'ref_end', 'ref_strand', 'ref_cigar', 'ref_mapq']
-    
+    if args.detailed:
+        if args.reference:
+            header += ['ref', 'ref_start', 'ref_end', 'ref_strand', 'ref_cigar', 'ref_mapq']
+        header += ['target_start', 'target_end','anchor_slope', 'anchor_intercept', 'prop_sites_with_mismatches']
+        
     outhandle.write('\t'.join(header) + '\n')
 
     for side in cluster_d:
@@ -162,16 +159,13 @@ def write_cluster_output(cluster_d, args):
             cl = cluster_d[side][cluster_id]
             target_pos = [i for i in cl.target_cov]
                        
-            row = [cl.cluster_id, side, cl.nr_reads, 
-                #cl.anchor_lm[1], cl.anchor_lm[0], 
-                min(target_pos), max(target_pos), 
-                #cl.target_lm[1], cl.target_lm[0],
-                cl.prop_sites_with_mismatches, 
-                len(cl.consensus), str(cl.consensus.seq)]
+            row = [cl.cluster_id, side, cl.nr_reads, str(cl.consensus.seq)]
             
-            if args.reference:
-                row += [cl.ref, cl.ref_start, cl.ref_end, cl.ref_strand, cl.ref_cigar, cl.ref_mapq]
-                
+            if args.detailed:
+                if args.reference:
+                    row += [cl.ref, cl.ref_start, cl.ref_end, cl.ref_strand, cl.ref_cigar, cl.ref_mapq]
+                row += [min(target_pos), max(target_pos),  cl.anchor_lm[1], cl.anchor_lm[0], cl.prop_sites_with_mismatches]
+
             outhandle.write('\t'.join(map(str, row)) + '\n')
                         
     outhandle.close()
@@ -205,7 +199,7 @@ def write_reference_output(overlaps, cluster_d, args):
 
     outhandle = open(os.path.join(args.outpath, f'{args.prefix}.reference_insertions.tsv'), 'w')
         
-    header = ['chromosome', 'position', 'strand', 'TSD', 'support_5', 'support_3', 'mapq_5', 'mapq_3', 'cigar_5', 'cigar_3']
+    header = ['chromosome', 'position', 'strand', 'TSD', 'support_5', 'support_3','anchor_5', 'anchor_3']
     
     # If an annotation is provided, load it and add gene information to output
     if args.annot:
@@ -218,6 +212,9 @@ def write_reference_output(overlaps, cluster_d, args):
         # Remove CDS entries
         annot = annot[annot['type'].isin(['gene', 'pseudogene', 'mobile_genetic_element'])]
         annot = annot.reset_index(drop=True)
+        
+    if args.detailed:
+        header += ['mapq_5', 'mapq_3', 'cigar_5', 'cigar_3']
         
     # Get chromosome length
     reference = SeqIO.read(args.reference, 'fasta')
@@ -249,24 +246,24 @@ def write_reference_output(overlaps, cluster_d, args):
         tsd_len = ins[4]
         tsd = cluster_d['5'][five_cl_nr].consensus.seq[-tsd_len:]
 
-        # Mapq and cigar
+        # Anchor ID, mapq and cigar
+        anchor5_id = ins[0]
+        anchor3_id = ins[2]
         mapq_5 = cluster_d['5'][five_cl_nr].ref_mapq
         cigar_5 = cluster_d['5'][five_cl_nr].ref_cigar
         mapq_3 = cluster_d['3'][three_cl_nr].ref_mapq
         cigar_3 = cluster_d['3'][three_cl_nr].ref_cigar
 
-        outline = [
-            chrom, str(position), strand, str(tsd),
-            str(support_5), str(support_3), 
-            str(mapq_5), str(mapq_3), cigar_5, cigar_3
-            ]
-
+        outline = [chrom, str(position), strand, str(tsd), str(support_5), str(support_3),anchor5_id, anchor3_id]
+        
         if args.annot:
             gene, dists_to_gene = gene_overlap(position, annot, chrom_length)
             outline += [gene, dists_to_gene]
             
-        outline = map(str, outline)
+        if args.detailed:
+            outline += [str(mapq_5), str(mapq_3), cigar_5, cigar_3]
 
+        outline = map(str, outline)
 
         outhandle.write('\t'.join(outline) + '\n')
         

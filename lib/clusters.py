@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import bisect
 import os
+import pandas
 import pysam
+import re
 import subprocess
-import sys
 
 from Bio import SeqIO
 from Bio.Seq import Seq
@@ -33,8 +35,10 @@ class AnchorCluster:
         self.cluster_id = f'{side}prime_{cluster_nr}'
         self.reads = []
         self.seqs = []
+        self.ref_coords = ''  # To store pysam read object with .reference_name, .reference_start, .reference_end, .is_reverse, .cigarstring, .mapping_quality
     
-    def align_anchor_reads(self, temp_dir, args):
+    
+    def align_anchor_reads(self, temp_dir, cpus):
         
         """
         Align the reads in the AnchorCluster instance with MAFFT.
@@ -54,7 +58,7 @@ class AnchorCluster:
         
         mafft_cmd = [
             'mafft',
-            '--thread', str(args.cpus),
+            '--thread', str(cpus),
             '--adjustdirection',
             fasta_path
             ]
@@ -121,7 +125,7 @@ class AnchorCluster:
             Depth of sequence coverage at the end of the alignment.
         prop_sites_with_mismatches : float
             Proportion of sites with mismatches in the alignment.
-        """
+        """      
         
         alignment_path = os.path.join(temp_dir, f'{self.cluster_id}.aligned.fasta')
 
@@ -177,80 +181,341 @@ class AnchorCluster:
         
         self.anchor_lm = lm(depth, position)
 
-    def add_reference_coordinates(self, ref_d):
-        if self.cluster_id in ref_d:
-            read = ref_d[self.cluster_id]
-            self.ref = read.reference_name
-            self.ref_start = read.reference_start
-            self.ref_end = read.reference_end
-            self.ref_strand = '-' if read.is_reverse else '+'
-            self.ref_cigar = read.cigarstring
-            self.ref_mapq = read.mapping_quality
-        else:
-            self.ref = 'NA'
-            self.ref_start = 'NA'
-            self.ref_end = 'NA'
-            self.ref_strand = 'NA'
-            self.ref_cigar = 'NA'
-            self.ref_mapq = 'NA'
-   
-        
-       
-        
-def cluster_anchors(read_d, l):
-    """_summary_
 
-    Args:
-        read_d (_type_): _description_
-        l (_type_): _description_
-    """
+class Clusters:
+    def __init__(self, args, temp_dir):
+        
+        # Input
+        self.min_anchor_length = args.min_anchor_len
+        self.min_cluster_size = args.min_cluster_size
+        self.cpus = args.cpus
+        self.temp_dir = temp_dir
+
+        # Output
+        self.by_side = {'5': [], '3': []}
+        self.cluster_d = {'5': {}, '3': {}}
+        
     
-    def group_strings_by_value(dictionary):
-        """ Group a dictionary by values. Used here to cluster sequences by exact identity
-        
-        Args:
-            dictionary (dict): keys are sequence IDs, values are sequences.
+    def cluster_anchors(self, reads, seed_len):
+        """
+        Cluster the anchor sequences in the read dictionary by exact identity.
 
-        Returns:
-            dict: keys are sequences, values are sequence IDs
+        Parameters
+        ----------
+        read_d : dict
+            A dictionary of Read objects, keyed by read ID.
+        seed_len : int
+            The length of the anchor sequence to consider for clustering.
+
+        Attributes
+        ----------
+        five : dict
+            A dictionary of 5' anchor sequences grouped by exact identity.
+        three : dict
+            A dictionary of 3' anchor sequences grouped by exact identity.
+        """
+        
+        def group_strings_by_value(dictionary):
+            """ Group a dictionary by values. Used here to cluster sequences by exact identity
+            
+            Args:
+                dictionary (dict): keys are sequence IDs, values are sequences.
+
+            Returns:
+                dict: keys are sequences, values are sequence IDs
+            """
+
+            grouped = {}
+            for key, values in dictionary.items():
+                for value in values:
+                    grouped.setdefault(value, []).append(key)
+            return grouped
+        
+        # Clustering, separate for 5' and 3'
+        
+        identifiers_5 = {}
+        identifiers_3 = {}
+
+        for read_id in reads.read_d:
+            for rec in reads.read_d[read_id].anchor_seq:
+                
+                seq = str(rec.seq)
+                seq_id = rec.id
+                
+                if reads.read_d[read_id].side == '5':
+                    identifiers_5.setdefault(seq_id, []).append(seq[-seed_len:])
+                
+                elif reads.read_d[read_id].side == '3':
+                    identifiers_3.setdefault(seq_id, []).append(seq[:seed_len])
+                    
+        self.by_side['5'] = group_strings_by_value(identifiers_5)
+        self.by_side['3'] = group_strings_by_value(identifiers_3)
+        
+        
+    def parse_clusters(self, reads):
+        """
+        Parse clusters of anchor sequences from a dictionary of Read objects. 
+
+        Parameters
+        ----------
+        read_d : dict
+            A dictionary of Read objects, keyed by read ID.
+
+        Attributes
+        ----------
+        parsed : dict
+            A dictionary of AnchorCluster objects, keyed by cluster ID and side.
+        """
+        
+        fasta_handle = open(f'{self.temp_dir}/anchor_consensi.fasta', 'w')
+
+        for side in self.by_side:
+            
+            n = 0
+            
+            for seq in self.by_side[side]:
+                
+                # Skip short clusters
+                if len(self.by_side[side][seq]) < self.min_cluster_size:
+                    continue
+                
+                ac = AnchorCluster(n, side)
+                
+                for read in self.by_side[side][seq]: 
+                    read_id = read[:-2]
+                    read_index = int(read[-1])
+                    anchor_rec = reads.read_d[read_id].anchor_seq[read_index]
+                        
+                    ac.seqs.append(anchor_rec)
+                    ac.reads.append(read_id)
+                    
+                ac.align_anchor_reads(self.temp_dir, self.cpus)
+                ac.get_cluster_consensus(self.temp_dir)
+                ac.summarize_IS_coordinates(reads.read_d)
+                self.cluster_d[side][n] = ac
+                    
+                if len(ac.consensus) > self.min_anchor_length:
+                    SeqIO.write(ac.consensus, fasta_handle, 'fasta')
+            
+                n += 1
+                
+        fasta_handle.close()
+        
+        
+    def add_ref_coordinates_to_clusters(self, ref_aligned_anchors):
+        """
+        Add reference coordinates to each cluster in the cluster dictionary.
+
+        Parameters
+        ----------
+        ref_aligned_anchors : str
+            Path to a BAM file containing aligned anchor sequences.
+        """
+        pybam = pysam.AlignmentFile(ref_aligned_anchors, "rb")
+        
+        ref_d = {}
+
+        for read in pybam.fetch():
+            ref_d[read.query_name] = read
+        pybam.close()
+        
+        for side in self.cluster_d:
+            for cluster_nr in self.cluster_d[side]:
+                cluster_id = self.cluster_d[side][cluster_nr].cluster_id
+                if cluster_id in ref_d:
+                    self.cluster_d[side][cluster_nr].ref_coords = ref_d[cluster_id]
+
+    
+    def write_cluster_output(self, args):
+    
+        """
+        Write output for anchor clusters to stdout.
+
+        Parameters
+        ----------
+        cluster_d : dict
+            Dictionary containing AnchorCluster objects for both 5' and 3' sides,
+            keyed by cluster IDs.
+        args : class
+            Input arguments containing parameters such as the minimum anchor length
+            and whether to include reference coordinates.
+        temp_dir : str
+            Path to the temporary directory where intermediate files are stored.
+
+        Returns
+        -------
+        out : dict
+            A dictionary containing the output for each anchor cluster, keyed by
+            side ('5' or '3').
+
+        """
+        outhandle = open(os.path.join(args.outpath, f'{args.prefix}.anchors.tsv'), 'w')
+
+        header = ['anchor_id', 'side', 'num_reads', 'consensus']
+        
+        if args.detailed:
+            if args.reference:
+                header += ['ref', 'ref_start', 'ref_end', 'ref_strand', 'ref_cigar', 'ref_mapq']
+            header += ['target_start', 'target_end','anchor_slope', 'anchor_intercept', 'prop_sites_with_mismatches']
+            
+        outhandle.write('\t'.join(header) + '\n')
+
+        for side in self.cluster_d:
+    
+            for cluster_id in self.cluster_d[side]:
+                cl = self.cluster_d[side][cluster_id]
+                target_pos = [i for i in cl.target_cov]
+                        
+                row = [cl.cluster_id, side, cl.nr_reads, str(cl.consensus.seq)]
+                
+                if args.detailed:
+                    if args.reference:
+                        row += [cl.ref, cl.ref_start, cl.ref_end, cl.ref_strand, cl.ref_cigar, cl.ref_mapq]
+                    row += [min(target_pos), max(target_pos),  cl.anchor_lm[1], cl.anchor_lm[0], cl.prop_sites_with_mismatches]
+
+                outhandle.write('\t'.join(map(str, row)) + '\n')
+                            
+        outhandle.close()
+
+
+    def write_reference_output(self, overlaps, ref_aligned_reads, args):
+    
+        """
+        Write the reference output with insertion details to a file or stdout.
+
+        This function processes identified insertions and writes details such as 
+        chromosome, position, strand, support from anchor reads, and target site 
+        duplication (TSD) to a specified output file or standard output. If provided, 
+        it also includes gene information and the distance to the gene.
+
+        Parameters
+        ----------
+        args : class
+            Input arguments containing the output file path, annotation file, and reference file.
+        overlaps : list
+            List of identified insertions with details on position, cluster numbers, and TSD length.
+        cluster_d : dict
+            Dictionary containing clusters of anchor reads for both 5' and 3' sides.
+        outpath : str
+            Path to the output directory (not used in this function).
+
+        Returns
+        -------
+        None
         """
 
-        grouped = {}
-        for key, values in dictionary.items():
-            for value in values:
-                grouped.setdefault(value, []).append(key)
-        return grouped
-    
-    # Clustering, separate for 5' and 3'
-    
-    identifiers_5 = {}
-    identifiers_3 = {}
+        outhandle = open(os.path.join(args.outpath, f'{args.prefix}.reference_insertions.tsv'), 'w')
+            
+        header = ['chromosome', 'position', 'strand', 'TSD', 'support_5', 'support_3','support_ref']
+        
+        # If an annotation is provided, load it and add gene information to output
+        if args.annot:
+            header += ['gene', 'dist_to_gene']
+            
+            annot = pandas.read_csv(
+                args.annot, sep='\t', comment='#', 
+                names=['seqid', 'source', 'type', 'start', 'end','score', 'strand', 'phase','attributes'])
+            
+            # Remove CDS entries
+            annot = annot[annot['type'].isin(['gene', 'pseudogene', 'mobile_genetic_element'])]
+            annot = annot.reset_index(drop=True)
+            
+        if args.detailed:
+            header += ['anchor_5', 'anchor_3','mapq_5', 'mapq_3', 'cigar_5', 'cigar_3']
+            
+        # Get chromosome length
+        reference = SeqIO.read(args.reference, 'fasta')
+        chrom_length = len(reference.seq)
+        outhandle.write('\t'.join(header) + '\n')
+        
+        # Get chromosome name, assuming that the reference is a single contig    
+        chromosomes = [seq_record.id for seq_record in SeqIO.parse(args.reference, 'fasta')]
+        chrom = chromosomes[0]
 
-    for read_id in read_d:
-        for rec in read_d[read_id].anchor_seq:
-            
-            seq = str(rec.seq)
-            seq_id = rec.id
-            
-            if read_d[read_id].side == '5':
-                identifiers_5.setdefault(seq_id, []).append(seq[-l:])
-            
-            elif read_d[read_id].side == '3':
-                identifiers_3.setdefault(seq_id, []).append(seq[:l])
+        # Now loop through identified mutations 
+        for ins in overlaps:
+
+            position = ins[1]
+            strand = '+' if ins[0].startswith('5prime') else '-'
+
+            # Nr anchor reads
+            if strand == '+':
+                five_cl_nr = int(ins[0].split('_')[1])
+                three_cl_nr = int(ins[2].split('_')[1])
+            elif strand == '-':
+                five_cl_nr = int(ins[2].split('_')[1])
+                three_cl_nr = int(ins[0].split('_')[1])
                 
-    clusters_5 = group_strings_by_value(identifiers_5)
-    clusters_3 = group_strings_by_value(identifiers_3)
+            support_5 = len(self.cluster_d['5'][five_cl_nr].reads)
+            support_3 = len(self.cluster_d['3'][three_cl_nr].reads)
+            
+            # Reference support
+            support_ref = get_reference_support(chrom, position, ref_aligned_reads)
+
+            # TSD
+            tsd_len = ins[4]
+            tsd = self.cluster_d['5'][five_cl_nr].consensus.seq[-tsd_len:]
+
+            # Anchor ID, mapq and cigar
+            anchor5_id = ins[0]
+            anchor3_id = ins[2]
+            mapq_5 = self.cluster_d['5'][five_cl_nr].ref_coords.mapping_quality
+            cigar_5 = self.cluster_d['5'][five_cl_nr].ref_coords.cigarstring
+            mapq_3 = self.cluster_d['3'][three_cl_nr].ref_coords.mapping_quality
+            cigar_3 = self.cluster_d['3'][three_cl_nr].ref_coords.cigarstring
+
+            outline = [chrom, str(position), strand, str(tsd), str(support_5), str(support_3), str(support_ref)]
+            
+            if args.annot:
+                gene, dists_to_gene = gene_overlap(position, annot, chrom_length)
+                outline += [gene, dists_to_gene]
+                
+            if args.detailed:
+                outline += [anchor5_id, anchor3_id, str(mapq_5), str(mapq_3), cigar_5, cigar_3]
+
+            outline = map(str, outline)
+
+            outhandle.write('\t'.join(outline) + '\n')
+            
+        outhandle.close()
+
+
+def get_reference_support(chromosome, position, bamfile, overlap=20):
+    """ Distinguished fixed from non-fixed polymorphisms: find reads that
+    overlap the insertion breakpoint
+    """
     
-    return {'5':clusters_5, '3':clusters_3}
+    readnr = 0
+    
+    pybam = pysam.AlignmentFile(bamfile, "rb")
+    
+    for read in pybam.fetch(chromosome, position, position+1):
+
+        if read.mapq == 0:
+            continue
+
+        down = [x for x in range(read.reference_start, read.reference_end) if x < position]
+        up = [x for x in range(read.reference_start, read.reference_end) if x > position]
+
+        if len(down) > overlap and len(up) > overlap:
+            readnr += 1
+            
+    pybam.close()
+            
+    return readnr
+        
+    
+
 
 
 def cd_hit(fasta_path, output_path, min_id = 0.99, ap=False):
-    
     """
     Run cd-hit-est on a fasta file of anchor sequences and return a dictionary
     where keys are cluster numbers and values are lists of read IDs present in
     each cluster.
 
+    NOT USED.
+        
     Parameters
     ----------
     fasta_path : str
@@ -294,7 +559,7 @@ def cd_hit(fasta_path, output_path, min_id = 0.99, ap=False):
     
     return clusters
 
-
+    
 def lm(target, features):
     """
     Perform linear regression on depth and positions data.
@@ -307,7 +572,7 @@ def lm(target, features):
     depth : array-like
         The independent variable data (e.g., depth values).
     positions : array-like
-        The dependent variable data (e.g., position values).
+        The dependent variable data (e.g., position values).bisect
 
     Returns
     -------
@@ -322,71 +587,8 @@ def lm(target, features):
     intercept = round(float(m.intercept_),2)
     slope = round(float(m.coef_[0]),2)
     return intercept, slope
+
     
-
-def parse_clusters(read_d, anchor_clusters, temp_dir, args):
-    
-    """
-    Parse clusters of anchor sequences and compute their consensus.
-
-    This function processes anchor sequences for both 5' and 3' sides by
-    clustering them using `cd-hit-est`. For each cluster, it creates an
-    `AnchorCluster` instance, adds reads to it, aligns the reads using MAFFT,
-    and computes the consensus sequence.
-
-    Parameters
-    ----------
-    read_d : dict
-        A dictionary where keys are read IDs and values are Read objects.
-    temp_dir : str
-        Path to the temporary directory where intermediate files are stored.
-    args : class
-        Input arguments containing parameters such as number of CPUs for MAFFT.
-
-    Returns
-    -------
-    anchor_clusters : dict
-        A dictionary containing `AnchorCluster` objects for both 5' and 3' sides,
-        keyed by cluster IDs.
-    """
-
-    cluster_d = {'5':{}, '3':{}}
-    fasta_handle = open(f'{temp_dir}/anchor_consensi.fasta', 'w')
-
-    for side in anchor_clusters:
-        
-        n = 0
-        
-        for seq in anchor_clusters[side]:
-            
-            # Skip short clusters
-            if len(anchor_clusters[side][seq]) < args.min_cluster_size:
-                continue
-            
-            ac = AnchorCluster(n, side)
-            
-            for read in anchor_clusters[side][seq]: 
-                read_id = read[:-2]
-                read_index = int(read[-1])
-                anchor_rec = read_d[read_id].anchor_seq[read_index]
-                    
-                ac.seqs.append(anchor_rec)
-                ac.reads.append(read_id)
-                
-            ac.align_anchor_reads(temp_dir, args)
-            ac.get_cluster_consensus(temp_dir)
-            ac.summarize_IS_coordinates(read_d)
-            cluster_d[side][n] = ac
-                
-            if len(ac.consensus) > args.min_anchor_len:
-                SeqIO.write(ac.consensus, fasta_handle, 'fasta')
-        
-            n += 1
-            
-    fasta_handle.close()
-                
-    return cluster_d
-
 
 def find_overlaps(ref_aligned_anchors, tsd_len):
     
@@ -427,36 +629,95 @@ def find_overlaps(ref_aligned_anchors, tsd_len):
                 overlaps.append((read_ids[i], end1, read_ids[j], start2, overlap))
                 
     return overlaps
+           
 
-
-def add_ref_coordinates_to_clusters(cluster_d, ref_aligned_anchors):
+def gene_overlap(position, annotation, chromosome_length):
+    """  Given a genomic position, return the genomic context as given by 
+    a gff annotation. Uses regex to extract strings after gene= and locus_tag=
     
-    """
-    Add reference coordinates to AnchorCluster objects from a sorted BAM file.
-
+    Issue:
+        - in the h37rv annotation features can be two indices apart
+        - for some features no regex is found
+    
+    
     Parameters
     ----------
-    cluster_d : dict
-        Dictionary containing AnchorCluster objects for both 5' and 3' sides,
-        keyed by cluster IDs.
-    ref_aligned_anchors : str
-        Path to the sorted BAM file containing anchor reads aligned to the reference.
+    positions : DataFrame
+        Pandas data frame containing the gff annotation.
+    annotation : str
+        Path to annotation file in gff format.
+    chromosome_length : int
+        Length of the reference genome. Used to get distance to dnaA when insertion is at the very end. 
 
     Returns
     -------
-    None
+    A list with one element for each position, containing the gene name 
+    and the distance to the gene. If the position is in a gene, this is one
+    name and distance 0; if the position is between genes, this is two genes 
+    and two distances separated by ;   
 
     """
     
-    pybam = pysam.AlignmentFile(ref_aligned_anchors, "rb")
-    
-    ref_d = {}
+    def gene_id_regex(patterns, gff_attributes):
+        """ Extract gene name and locus tag (or any pattern) from the
+        atrribute column of a gff
+        
+        Parameters
+        ----------
+        patterns : list
+            List containing regex patterns to extract.
+        gff_attributes : str
+            Single gff attribute entry.
 
-    for read in pybam.fetch():
-        ref_d[read.query_name] = read
-    pybam.close()
-    
-    for side in cluster_d:
-        for cluster_id in cluster_d[side]:
-            cluster_d[side][cluster_id].add_reference_coordinates(ref_d)
+        Returns
+        -------
+        out : str
+            Matches separated by a comma.
 
+        """
+        
+        for pattern in patterns:
+            match = re.search(pattern, gff_attributes)
+            if match:
+                return match.group(1)
+    
+    
+    regex_patterns = [
+        r";gene=([^;\n]+)", 
+        r"locus_tag=([^;\n]+)", 
+        r"mobile_element_type=([^;\n]+)"
+        ]
+    
+    # Find the closest intervals on either side of each position
+    idx_s = bisect.bisect_right(annotation['start'], position)
+    idx_e = bisect.bisect_right(annotation['end'], position)
+    
+    # Overlapping feature
+    if (idx_e == idx_s - 1) or (idx_e == idx_s -2):
+                
+        gene_info = gene_id_regex(
+            regex_patterns, annotation['attributes'][idx_e])
+        
+        return [gene_info, '0']
+                                
+    # Inbetween features
+    elif idx_s == idx_e:
+        
+        gene_info_5 = gene_id_regex(
+            regex_patterns, annotation['attributes'][idx_s - 1])
+        
+        dist_to_5 = position - annotation['end'][idx_s - 1]
+        
+        # Insertion after last gene
+        if idx_s == len(annotation):
+            idx_s = 0
+        
+        gene_info_3 = gene_id_regex(
+            regex_patterns, annotation['attributes'][idx_s])
+        
+        if idx_s == 0:
+            dist_to_3 = chromosome_length - position
+        else:
+            dist_to_3 = annotation['start'][idx_s] - position
+        
+        return [f'{gene_info_5};{gene_info_3}', f'{dist_to_5};{dist_to_3}']
