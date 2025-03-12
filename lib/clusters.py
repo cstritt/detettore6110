@@ -356,7 +356,7 @@ class Clusters:
         if args.detailed:
             if args.reference:
                 header += ['ref', 'ref_start', 'ref_end', 'ref_strand', 'ref_cigar', 'ref_mapq']
-            header += ['target_start', 'target_end','anchor_slope', 'anchor_intercept', 'prop_sites_with_mismatches']
+            header += ['target_start', 'target_end', 'prop_sites_with_mismatches']
             
         outhandle.write('\t'.join(header) + '\n')
 
@@ -370,8 +370,14 @@ class Clusters:
                 
                 if args.detailed:
                     if args.reference:
-                        row += [cl.ref, cl.ref_start, cl.ref_end, cl.ref_strand, cl.ref_cigar, cl.ref_mapq]
-                    row += [min(target_pos), max(target_pos),  cl.anchor_lm[1], cl.anchor_lm[0], cl.prop_sites_with_mismatches]
+                        ref_strand = '-' if cl.ref_coords.is_reverse else '+'
+                        
+                        row += [
+                            cl.ref_coords.reference_name, cl.ref_coords.reference_start, cl.ref_coords.reference_end,
+                            ref_strand, cl.ref_coords.cigarstring, cl.ref_coords.mapping_quality
+                            ]
+
+                    row += [min(target_pos), max(target_pos),  cl.prop_sites_with_mismatches]
 
                 outhandle.write('\t'.join(map(str, row)) + '\n')
                             
