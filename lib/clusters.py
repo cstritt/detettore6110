@@ -370,12 +370,15 @@ class Clusters:
                 
                 if args.detailed:
                     if args.reference:
-                        ref_strand = '-' if cl.ref_coords.is_reverse else '+'
-                        
-                        row += [
-                            cl.ref_coords.reference_name, cl.ref_coords.reference_start, cl.ref_coords.reference_end,
-                            ref_strand, cl.ref_coords.cigarstring, cl.ref_coords.mapping_quality
-                            ]
+                        try:
+                            ref_strand = '-' if cl.ref_coords.is_reverse else '+'
+                            row += [
+                                cl.ref_coords.reference_name, cl.ref_coords.reference_start, cl.ref_coords.reference_end,
+                                ref_strand, cl.ref_coords.cigarstring, cl.ref_coords.mapping_quality
+                                ]
+                            
+                        except AttributeError:
+                            row += ['NA', 'NA', 'NA', 'NA', 'NA', 'NA']
 
                     row += [min(target_pos), max(target_pos),  cl.prop_sites_with_mismatches]
 
