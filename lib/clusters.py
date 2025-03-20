@@ -35,6 +35,7 @@ class AnchorCluster:
         self.cluster_id = f'{side}prime_{cluster_nr}'
         self.reads = []
         self.seqs = []
+        self.is_seqs = []  # to store the read parts matching the IS target
         self.ref_coords = ''  # To store pysam read object with .reference_name, .reference_start, .reference_end, .is_reverse, .cigarstring, .mapping_quality
     
     
@@ -73,7 +74,6 @@ class AnchorCluster:
     def summarize_IS_coordinates(self, read_d):
         """ Go through reads and store which positions of the IS are covered
         """
-        
         self.target_cov = {}
         for read_id in self.reads:
             
@@ -254,7 +254,12 @@ class Clusters:
         
     def parse_clusters(self, reads):
         """
-        Parse clusters of anchor sequences from a dictionary of Read objects. 
+        Parse clusters of anchor sequences from a dictionary of Read objects: 
+            - initiate AnchorCluster
+            - align anchor reads and call consensus
+            - write consensi to fasta
+        
+        Addition: also align IS parts and write their consensi to fasta
 
         Parameters
         ----------
@@ -285,10 +290,12 @@ class Clusters:
                     read_id = read[:-2]
                     read_index = int(read[-1])
                     anchor_rec = reads.read_d[read_id].anchor_seq[read_index]
+                    target_rec = reads.read_d[read_id].target_seq[read_index]
                         
-                    ac.seqs.append(anchor_rec)
                     ac.reads.append(read_id)
-                    
+                    ac.seqs.append(anchor_rec)
+                    ac.is_seqs.append(target_rec)
+                                        
                 ac.align_anchor_reads(self.temp_dir, self.cpus)
                 ac.get_cluster_consensus(self.temp_dir)
                 ac.summarize_IS_coordinates(reads.read_d)

@@ -33,6 +33,7 @@ class Read:
         self.read_id = read_id
         self.paf_rows = []  # To investigate secondary mappings
         
+        self.hit_coordinates = []
         self.anchor_coordinates = []
         self.target_coordinates = []
         
@@ -59,6 +60,7 @@ class Read:
         
         # Anchor part (read part that does not map against IS)
         self.query_strand = paf_row['strand']
+        self.hit_coordinates.append((paf_row['query_start'], paf_row['query_end']))
         
         if paf_row['query_start'] == 0:
             anchor_start = paf_row['query_end']
@@ -102,16 +104,20 @@ class Read:
              
             target = self.target_coordinates[i]
             
+            hit_start, hit_end = self.hit_coordinates[i]            
             anchor_start, anchor_end = anchor
             target_start, target_end = target
             
             # Reorient reads such that they all begin with the IS overlapping part
             # This will allow more stric clustering with cd-hiz-est (-ap)
             anchor_seq = read.seq[anchor_start:anchor_end]
+            target_seq = read.seq[hit_start:hit_end]
+            
             read_id = f'{read.id}_{i}'
             
             if self.query_strand == '-':
-                anchor_seq = anchor_seq.reverse_complement()                
+                anchor_seq = anchor_seq.reverse_complement()   
+                target_seq = target_seq.reverse_complement()             
                         
             self.anchor_seq.append(
                 SeqRecord(
@@ -124,7 +130,7 @@ class Read:
             
             self.target_seq.append(
                 SeqRecord(
-                    read.seq[target_start:target_end],
+                    target_seq,
                     id=f'{read.id}_{i}',
                     name = '',
                     description=f'{target_start}-{target_end}'
