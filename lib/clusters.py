@@ -3,6 +3,7 @@
 
 import bisect
 import os
+import numpy
 import pandas
 import pysam
 import re
@@ -34,8 +35,9 @@ class AnchorCluster:
         self.side = side
         self.cluster_id = f'{side}prime_{cluster_nr}'
         self.reads = []
-        self.seqs = []
-        self.is_seqs = []  # to store the read parts matching the IS target
+        self.anchor_seqs = []
+        self.anchor_seqs_aligned = []
+        self.target_seqs = []  # to store the read parts matching the IS target. Aligned by default, since they all start at pos 0 of the target.
         self.ref_coords = ''  # To store pysam read object with .reference_name, .reference_start, .reference_end, .is_reverse, .cigarstring, .mapping_quality
     
     
@@ -55,7 +57,7 @@ class AnchorCluster:
         alignment_path = os.path.join(temp_dir, f'{self.cluster_id}.aligned.fasta')
         
         with open(fasta_path, 'w') as fasta_handle:
-            SeqIO.write(self.seqs, fasta_handle, 'fasta')
+            SeqIO.write(self.anchor_seqs, fasta_handle, 'fasta')
         
         mafft_cmd = [
             'mafft',
@@ -89,7 +91,7 @@ class AnchorCluster:
         
         pos = [[i] for i in self.target_cov]  # sort and use index rather than actual position
         
-        self.target_lm = lm(depth, pos)
+        #self.target_lm = lm(depth, pos)
                 
 
     def get_cluster_consensus(self, temp_dir):
@@ -107,7 +109,7 @@ class AnchorCluster:
         of the alignment.
 
         Parameters
-        ----------
+        ----------seqs
         alignment_path : str
             Path to the alignment file in FASTA format.
 
@@ -130,6 +132,7 @@ class AnchorCluster:
         alignment_path = os.path.join(temp_dir, f'{self.cluster_id}.aligned.fasta')
 
         aln = AlignIO.read(open(alignment_path), "fasta")
+        self.anchor_seqs_aligned = [rec.reverse_complement() for rec in aln]
         aln_smry = AlignInfo.SummaryInfo(aln)
         
         self.nr_reads = len(aln)
@@ -179,7 +182,7 @@ class AnchorCluster:
             description=''
             )
         
-        self.anchor_lm = lm(depth, position)
+        #self.anchor_lm = lm(depth, position)
 
 
 class Clusters:
@@ -293,12 +296,17 @@ class Clusters:
                     target_rec = reads.read_d[read_id].target_seq[read_index]
                         
                     ac.reads.append(read_id)
-                    ac.seqs.append(anchor_rec)
-                    ac.is_seqs.append(target_rec)
+                    ac.anchor_seqs.append(anchor_rec)
+                    ac.target_seqs.append(target_rec)
                                         
                 ac.align_anchor_reads(self.temp_dir, self.cpus)
                 ac.get_cluster_consensus(self.temp_dir)
                 ac.summarize_IS_coordinates(reads.read_d)
+                
+                # Reorient target seqs
+                if side == '3':
+                    ac.target_seqs = [rec.reverse_complement() for rec in ac.target_seqs]
+                
                 self.cluster_d[side][n] = ac
                     
                 if len(ac.consensus) > self.min_anchor_length:
@@ -316,7 +324,7 @@ class Clusters:
         Parameters
         ----------
         ref_aligned_anchors : str
-            Path to a BAM file containing aligned anchor sequences.
+            Path to a BAM file containing aligned is_seqsanchor sequences.
         """
         pybam = pysam.AlignmentFile(ref_aligned_anchors, "rb")
         
@@ -358,12 +366,11 @@ class Clusters:
         """
         outhandle = open(os.path.join(args.outpath, f'{args.prefix}.anchors.tsv'), 'w')
 
-        header = ['anchor_id', 'side', 'num_reads', 'consensus']
+        header = ['anchor_id', 'side', 'num_reads', 'consensus', 'anchor_entropy', 'target_entropy']
         
-        if args.detailed:
-            if args.reference:
-                header += ['ref', 'ref_start', 'ref_end', 'ref_strand', 'ref_cigar', 'ref_mapq']
-            header += ['target_start', 'target_end', 'prop_sites_with_mismatches']
+        if args.reference:
+            header += ['ref', 'ref_start', 'ref_end', 'ref_strand', 'ref_cigar', 'ref_mapq']
+            
             
         outhandle.write('\t'.join(header) + '\n')
 
@@ -371,23 +378,24 @@ class Clusters:
     
             for cluster_id in self.cluster_d[side]:
                 cl = self.cluster_d[side][cluster_id]
-                target_pos = [i for i in cl.target_cov]
-                        
-                row = [cl.cluster_id, side, cl.nr_reads, str(cl.consensus.seq)]
+                #target_pos = [i for i in cl.target_cov]
                 
-                if args.detailed:
-                    if args.reference:
-                        try:
-                            ref_strand = '-' if cl.ref_coords.is_reverse else '+'
-                            row += [
-                                cl.ref_coords.reference_name, cl.ref_coords.reference_start, cl.ref_coords.reference_end,
-                                ref_strand, cl.ref_coords.cigarstring, cl.ref_coords.mapping_quality
-                                ]
-                            
-                        except AttributeError:
-                            row += ['NA', 'NA', 'NA', 'NA', 'NA', 'NA']
-
-                    row += [min(target_pos), max(target_pos),  cl.prop_sites_with_mismatches]
+                # Alignment quality: average column entropy
+                anchor_entropy = average_column_entropy(cl.anchor_seqs_aligned)        
+                target_entropy = average_column_entropy(cl.target_seqs)
+                        
+                row = [cl.cluster_id, side, cl.nr_reads, str(cl.consensus.seq), anchor_entropy, target_entropy]
+                
+                if args.reference:
+                    try:
+                        ref_strand = '-' if cl.ref_coords.is_reverse else '+'
+                        row += [
+                            cl.ref_coords.reference_name, cl.ref_coords.reference_start, cl.ref_coords.reference_end,
+                            ref_strand, cl.ref_coords.cigarstring, cl.ref_coords.mapping_quality
+                            ]
+                        
+                    except AttributeError:
+                        row += ['NA', 'NA', 'NA', 'NA', 'NA', 'NA']
 
                 outhandle.write('\t'.join(map(str, row)) + '\n')
                             
@@ -422,7 +430,7 @@ class Clusters:
 
         outhandle = open(os.path.join(args.outpath, f'{args.prefix}.reference_insertions.tsv'), 'w')
             
-        header = ['chromosome', 'position', 'strand', 'TSD', 'support_5', 'support_3','support_ref']
+        header = ['chromosome', 'position', 'strand', 'TSD', 'support_5', 'support_3','support_ref', 'anchor_5', 'anchor_3']
         
         # If an annotation is provided, load it and add gene information to output
         if args.annot:
@@ -435,9 +443,6 @@ class Clusters:
             # Remove CDS entries
             annot = annot[annot['type'].isin(['gene', 'pseudogene', 'mobile_genetic_element'])]
             annot = annot.reset_index(drop=True)
-            
-        if args.detailed:
-            header += ['anchor_5', 'anchor_3','mapq_5', 'mapq_3', 'cigar_5', 'cigar_3']
             
         # Get chromosome length
         reference = SeqIO.read(args.reference, 'fasta')
@@ -475,20 +480,17 @@ class Clusters:
             # Anchor ID, mapq and cigar
             anchor5_id = ins[0]
             anchor3_id = ins[2]
-            mapq_5 = self.cluster_d['5'][five_cl_nr].ref_coords.mapping_quality
-            cigar_5 = self.cluster_d['5'][five_cl_nr].ref_coords.cigarstring
-            mapq_3 = self.cluster_d['3'][three_cl_nr].ref_coords.mapping_quality
-            cigar_3 = self.cluster_d['3'][three_cl_nr].ref_coords.cigarstring
+            #mapq_5 = self.cluster_d['5'][five_cl_nr].ref_coords.mapping_quality
+            #cigar_5 = self.cluster_d['5'][five_cl_nr].ref_coords.cigarstring
+            #mapq_3 = self.cluster_d['3'][three_cl_nr].ref_coords.mapping_quality
+            #cigar_3 = self.cluster_d['3'][three_cl_nr].ref_coords.cigarstring
 
-            outline = [chrom, str(position), strand, str(tsd), str(support_5), str(support_3), str(support_ref)]
+            outline = [chrom, str(position), strand, str(tsd), str(support_5), str(support_3), str(support_ref), anchor5_id, anchor3_id]
             
             if args.annot:
                 gene, dists_to_gene = gene_overlap(position, annot, chrom_length)
                 outline += [gene, dists_to_gene]
-                
-            if args.detailed:
-                outline += [anchor5_id, anchor3_id, str(mapq_5), str(mapq_3), cigar_5, cigar_3]
-
+            
             outline = map(str, outline)
 
             outhandle.write('\t'.join(outline) + '\n')
@@ -521,9 +523,6 @@ def get_reference_support(chromosome, position, bamfile, overlap=20):
     return readnr
         
     
-
-
-
 def cd_hit(fasta_path, output_path, min_id = 0.99, ap=False):
     """
     Run cd-hit-est on a fasta file of anchor sequences and return a dictionary
@@ -737,3 +736,28 @@ def gene_overlap(position, annotation, chromosome_length):
             dist_to_3 = annotation['start'][idx_s] - position
         
         return [f'{gene_info_5};{gene_info_3}', f'{dist_to_5};{dist_to_3}']
+    
+    
+import numpy as np
+from Bio.SeqRecord import SeqRecord
+
+def average_column_entropy(seq_records):
+    """
+    Calculate the average column entropy from a given list of SeqRecord objects.
+
+    Parameters:
+    seq_records (list of SeqRecord): The input list of SeqRecord objects.
+
+    Returns:
+    float: The average column entropy.
+    """
+    max_length = max(len(record.seq) for record in seq_records)
+
+    entropies = []
+    for i in range(max_length):
+        column = [record.seq[i] for record in seq_records if i < len(record.seq) and record.seq[i] != '-']
+        if column:
+            freqs = np.array([column.count(base) for base in set(column)]) / len(column)
+            entropy = -np.sum(freqs * np.log2(freqs))
+            entropies.append(entropy)
+    return round(np.mean(entropies), 2)

@@ -91,10 +91,6 @@ def get_args():
     parser_settings.add_argument(
         '--keep', action = 'store_true',
         help='Keep intermediate files in folder <pref>_tmp.')
-    
-    parser_settings.add_argument(
-        '--detailed', action = 'store_true',
-        help='Provide more detailed output (useful for debugging).')
 
     args=parser.parse_args()
 
@@ -104,9 +100,12 @@ def get_args():
 def exit_handler(args, temp_dir):
     """ Cleanup after program finish. If --keep is given, copy contents of 
     temporary directory to working directory before deleting it"""
+    
     if args.keep:  # Copy contents of temporary to output directory
-        shutil.copytree(temp_dir, os.path.join(args.outpath, args.prefix + '_intermediate_files'))
-        
+        dest = os.path.join(args.outpath, args.prefix + '_intermediate_files')
+        if os.path.exists(dest):
+            shutil.rmtree(dest)
+        shutil.copytree(temp_dir, dest )
     shutil.rmtree(temp_dir)
 
 
