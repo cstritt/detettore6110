@@ -22,7 +22,23 @@ def get_args():
         from short-read sequencing data.\n""",
         
         epilog="""
-        Example usage: """
+        Example usage:
+        
+        detettore6110.py testing/some_reads.fastq.gz \
+            -t resources/is_targets/IS6110.fasta \
+            -o testing/results \
+            -p some_reads
+            
+        With reference genome and annotation:
+        
+        detettore6110.py testing/some_reads.fastq.gz \
+            -t resources/is_targets/IS6110.fasta \
+            -r resources/reference/MTBC0_v1.1.fasta \
+            -a resources/reference/MTBC0v1.1_PGAP_annot.gff \
+            -o testing/results \
+            -p some_reads
+        
+        """
         )
 
     parser_input = parser.add_argument_group('Input/Output')
@@ -48,12 +64,10 @@ def get_args():
     
     parser_input.add_argument(
         "-r", dest="reference",
-        default=os.path.join(path_to_detettore, 'resources/reference/MTBC0_v1.1.fasta'),
         help='Reference genome in fasta format.')
 
     parser_input.add_argument(
         "-a", dest="annot",
-        default=os.path.join(path_to_detettore, 'resources/reference/MTBC0v1.1_PGAP_annot.gff'),
         help='Gene annotation in gff format.')
     
     # Parameters
@@ -118,6 +132,9 @@ def main():
     atexit.register(exit_handler, args, temp_dir)
     target = os.path.abspath(args.target)
     reads = readparsing.Reads(args, temp_dir)
+    
+    if not os.path.exists(args.outpath):
+        os.mkdir(args.outpath)
     
     # Map reads against IS target ###########################################
     readparsing.mapreads(reads.fastq, target, 'reads_vs_IS', temp_dir, 'paf', args.cpus, k=9, m=10)  # Map reads against target IS

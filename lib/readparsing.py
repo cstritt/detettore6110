@@ -4,12 +4,10 @@
 import gzip
 import os
 import pandas
-import pysam
 import subprocess
 import warnings
 
 from Bio import SeqIO
-from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
 

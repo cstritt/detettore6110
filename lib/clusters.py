@@ -3,7 +3,6 @@
 
 import bisect
 import os
-import numpy
 import pandas
 import pysam
 import re
@@ -16,7 +15,6 @@ from Bio import AlignIO
 from Bio.Align import AlignInfo
 from collections import Counter
 from sklearn.linear_model import LinearRegression
-
 from collections import Counter
 
 
@@ -430,7 +428,15 @@ class Clusters:
 
         outhandle = open(os.path.join(args.outpath, f'{args.prefix}.reference_insertions.tsv'), 'w')
             
-        header = ['chromosome', 'position', 'strand', 'TSD', 'support_5', 'support_3','support_ref', 'anchor_5', 'anchor_3']
+        header = [
+            'chromosome', 'position', 'strand', 
+            'TSD', 
+            'support_5', 'support_3',
+            'support_ref', 
+            'anchor_5', 'anchor_3', 
+            'mapq_5', 'mapq_3', 
+            'cigar_5', 'cigar_3'
+            ]
         
         # If an annotation is provided, load it and add gene information to output
         if args.annot:
@@ -480,12 +486,20 @@ class Clusters:
             # Anchor ID, mapq and cigar
             anchor5_id = ins[0]
             anchor3_id = ins[2]
-            #mapq_5 = self.cluster_d['5'][five_cl_nr].ref_coords.mapping_quality
-            #cigar_5 = self.cluster_d['5'][five_cl_nr].ref_coords.cigarstring
-            #mapq_3 = self.cluster_d['3'][three_cl_nr].ref_coords.mapping_quality
-            #cigar_3 = self.cluster_d['3'][three_cl_nr].ref_coords.cigarstring
+            mapq_5 = self.cluster_d['5'][five_cl_nr].ref_coords.mapping_quality
+            cigar_5 = self.cluster_d['5'][five_cl_nr].ref_coords.cigarstring
+            mapq_3 = self.cluster_d['3'][three_cl_nr].ref_coords.mapping_quality
+            cigar_3 = self.cluster_d['3'][three_cl_nr].ref_coords.cigarstring
 
-            outline = [chrom, str(position), strand, str(tsd), str(support_5), str(support_3), str(support_ref), anchor5_id, anchor3_id]
+            outline = [
+                chrom, str(position), strand, 
+                str(tsd), 
+                str(support_5), str(support_3), 
+                str(support_ref), 
+                anchor5_id, anchor3_id,
+                mapq_5, mapq_3,
+                cigar_5, cigar_3
+                ]
             
             if args.annot:
                 gene, dists_to_gene = gene_overlap(position, annot, chrom_length)

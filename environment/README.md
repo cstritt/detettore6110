@@ -11,7 +11,9 @@ conda create -n detettore6110 -c conda-forge \
   samtools \
   seqtk \
   pandas \
-  biopython
+  biopython \
+  scikit-learn \
+  mafft
 
 
 conda env export --from-history > environment.yml # manually edit to keep main dependencies??
