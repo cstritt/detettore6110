@@ -14,20 +14,18 @@ import pysam
 import re
 import shutil
 
-
 from Bio import SeqIO
 from collections import Counter
     
     
-def exit_handler(args, temp_dir, working_dir):
+def exit_handler(args, temp_dir):
     """ Cleanup after program finish. If --keep is given, copy contents of 
     temporary directory to working directory before deleting it"""
-    if args.pref:  # Copy contents of temporary to working directory
-        shutil.copytree(temp_dir, os.path.join(working_dir, args.pref + '_tmp'))
+    if args.keep:  # Copy contents of temporary to output directory
+        shutil.copytree(temp_dir, os.path.join(args.outpath, args.prefix + '_intermediate_files'))
         
     shutil.rmtree(temp_dir)
     
-
 
 def gene_overlap(position, annotation, chromosome_length):
     """  Given a genomic position, return the genomic context as given by 
@@ -56,6 +54,30 @@ def gene_overlap(position, annotation, chromosome_length):
 
     """
     
+    def gene_id_regex(patterns, gff_attributes):
+        """ Extract gene name and locus tag (or any pattern) from the
+        atrribute column of a gff
+        
+        Parameters
+        ----------
+        patterns : list
+            List containing regex patterns to extract.
+        gff_attributes : str
+            Single gff attribute entry.
+
+        Returns
+        -------
+        out : str
+            Matches separated by a comma.
+
+        """
+        
+        for pattern in patterns:
+            match = re.search(pattern, gff_attributes)
+            if match:
+                return match.group(1)
+    
+    
     regex_patterns = [
         r";gene=([^;\n]+)", 
         r"locus_tag=([^;\n]+)", 
@@ -67,7 +89,7 @@ def gene_overlap(position, annotation, chromosome_length):
     idx_e = bisect.bisect_right(annotation['end'], position)
     
     # Overlapping feature
-    if idx_e == idx_s - 1:
+    if (idx_e == idx_s - 1) or (idx_e == idx_s -2):
                 
         gene_info = gene_id_regex(
             regex_patterns, annotation['attributes'][idx_e])
@@ -95,85 +117,89 @@ def gene_overlap(position, annotation, chromosome_length):
             dist_to_3 = annotation['start'][idx_s] - position
         
         return [f'{gene_info_5};{gene_info_3}', f'{dist_to_5};{dist_to_3}']
-        
 
-def gene_id_regex(patterns, gff_attributes):
-    """ Extract gene name and locus tag (or any pattern) from the
-    atrribute column of a gff
+
+def write_cluster_output(cluster_d, args):
     
+    """
+    Write output for anchor clusters to stdout.
+
     Parameters
     ----------
-    patterns : list
-        List containing regex patterns to extract.
-    gff_attributes : str
-        Single gff attribute entry.
+    cluster_d : dict
+        Dictionary containing AnchorCluster objects for both 5' and 3' sides,
+        keyed by cluster IDs.
+    args : class
+        Input arguments containing parameters such as the minimum anchor length
+        and whether to include reference coordinates.
+    temp_dir : str
+        Path to the temporary directory where intermediate files are stored.
 
     Returns
     -------
-    out : str
-        Matches separated by a comma.
+    out : dict
+        A dictionary containing the output for each anchor cluster, keyed by
+        side ('5' or '3').
 
     """
-    
-    for pattern in patterns:
-        match = re.search(pattern, gff_attributes)
-        if match:
-            return match.group(1)
-        
+    outhandle = open(os.path.join(args.outpath, f'{args.prefix}.anchors.tsv'), 'w')
 
+    header = ['anchor_id', 'side', 'num_reads', 'consensus']
     
-
-def write_output(args, clusters, copy_number, outpath, 
-                 both_sides=True, require_tsd=True, mapq_filt=True):
-    """ Write detettore6110 output, including copy number and 
-    insertion sites. 
-    
-    (Only the mapq filter works properly at the moment! All other need to
-    be set to true. Maybe implement less stringent filtering and allow
-    less clear-cut insertion signatures, with separated or single cluster
-    support.)
-           
+    if args.detailed:
+        if args.reference:
+            header += ['ref', 'ref_start', 'ref_end', 'ref_strand', 'ref_cigar', 'ref_mapq']
+        header += ['target_start', 'target_end','anchor_slope', 'anchor_intercept', 'prop_sites_with_mismatches']
         
+    outhandle.write('\t'.join(header) + '\n')
+
+    for side in cluster_d:
+ 
+        for cluster_id in cluster_d[side]:
+            cl = cluster_d[side][cluster_id]
+            target_pos = [i for i in cl.target_cov]
+                       
+            row = [cl.cluster_id, side, cl.nr_reads, str(cl.consensus.seq)]
+            
+            if args.detailed:
+                if args.reference:
+                    row += [cl.ref, cl.ref_start, cl.ref_end, cl.ref_strand, cl.ref_cigar, cl.ref_mapq]
+                row += [min(target_pos), max(target_pos),  cl.anchor_lm[1], cl.anchor_lm[0], cl.prop_sites_with_mismatches]
+
+            outhandle.write('\t'.join(map(str, row)) + '\n')
+                        
+    outhandle.close()
+
+
+def write_reference_output(overlaps, cluster_d, args):
+    
+    """
+    Write the reference output with insertion details to a file or stdout.
+
+    This function processes identified insertions and writes details such as 
+    chromosome, position, strand, support from anchor reads, and target site 
+    duplication (TSD) to a specified output file or standard output. If provided, 
+    it also includes gene information and the distance to the gene.
+
     Parameters
     ----------
-    args : args
-        Arguments passed to detettore.
-    clusters : list
-        Split read clusters obtained from cluster_splitreads function.
-    copy_number : int
-        IS copy number from copynumbers.get_copy_number.
+    args : class
+        Input arguments containing the output file path, annotation file, and reference file.
+    overlaps : list
+        List of identified insertions with details on position, cluster numbers, and TSD length.
+    cluster_d : dict
+        Dictionary containing clusters of anchor reads for both 5' and 3' sides.
     outpath : str
-        Write file to this directory.
-        
-    both_sides : bool, optional
-        Require split reads from 5' and 3' side. Default true. 
-    require_tsd : bool, optional
-        Require that splitread clusters overlap because of target site 
-        duplication. Default true.
-    mapq_filt : bool, optional
-        Require that anchor read mapq do not sum to 0. Default false.
-        
-    
+        Path to the output directory (not used in this function).
+
     Returns
     -------
-    Writes detettore6110 results to stdout or to file.
-
+    None
     """
 
-    if args.outfile:
-        outhandle = open(args.outfile, 'w')
+    outhandle = open(os.path.join(args.outpath, f'{args.prefix}.reference_insertions.tsv'), 'w')
         
-    header = [
-        
-        'chromosome', 'position', 'strand', 
-        
-        'support_L', 'support_R', 'mean_mapq',
-        
-        'TSD', 'position_L', 'position_R' 
-    
-        #'IS_start', 'IS_end'
-        
-        ]
+    header = ['chromosome', 'position', 'strand', 'TSD', 'support_5', 'support_3','anchor_5', 'anchor_3']
     
     # If an annotation is provided, load it and add gene information to output
     if args.annot:
@@ -187,97 +213,61 @@ def write_output(args, clusters, copy_number, outpath,
         annot = annot[annot['type'].isin(['gene', 'pseudogene', 'mobile_genetic_element'])]
         annot = annot.reset_index(drop=True)
         
+    if args.detailed:
+        header += ['mapq_5', 'mapq_3', 'cigar_5', 'cigar_3']
+        
     # Get chromosome length
-    reference = SeqIO.read(args.ref, 'fasta')
+    reference = SeqIO.read(args.reference, 'fasta')
     chrom_length = len(reference.seq)
+    outhandle.write('\t'.join(header) + '\n')
     
-    headerstr = '\t'.join(header)
-    firstlines = f'#CN {copy_number}\n{headerstr}\n'
-    outhandle.write(firstlines) if args.outfile else sys.stdout.write(firstlines)
-    
-
     # Get chromosome name, assuming that the reference is a single contig    
-    chromosomes = [seq_record.id for seq_record in SeqIO.parse(args.ref, 'fasta')]
-    CHROM = chromosomes[0]
+    chromosomes = [seq_record.id for seq_record in SeqIO.parse(args.reference, 'fasta')]
+    chrom = chromosomes[0]
 
-    for i, c in enumerate(clusters):
-        
-        # Nr supporting reads
-        SUPPORT_LEFT = len(c[2].breakpoint[0])
-        SUPPORT_RIGHT = len(c[2].breakpoint[1])
-        
-        if both_sides and SUPPORT_LEFT == 0 or SUPPORT_RIGHT == 0:
-                continue
-        
+    # Now loop through identified mutations 
+    for ins in overlaps:
+
+        position = ins[1]
+        strand = '+' if ins[0].startswith('5prime') else '-'
+
+        # Nr anchor reads
+        if strand == '+':
+            five_cl_nr = int(ins[0].split('_')[1])
+            three_cl_nr = int(ins[2].split('_')[1])
+        elif strand == '-':
+            five_cl_nr = int(ins[2].split('_')[1])
+            three_cl_nr = int(ins[0].split('_')[1])
             
-        # IS info
-        is_name = list(c[2].te_hits.keys())[0]
-        te_hits = c[2].te_hits[is_name]
-        
-        #TE_L_START = min(te_hits['aligned_positions_left'])
-        #TE_L_END = max(te_hits['aligned_positions_left'])
-        #TE_START = f'{TE_L_START}-{TE_L_END}'
-        
-        #TE_R_START = min(te_hits['aligned_positions_right'])
-        #TE_R_END = max(te_hits['aligned_positions_right'])
-        #TE_END = f'{TE_R_START}-{TE_R_END}'
-        
-        STRAND = '+' if te_hits['strand']['+'] > te_hits['strand']['-'] else '-'
-        
-        
-        # Position: the right-most base of the left cluster (5' strand) is considered the insertion site
-        POS_LEFT = max(remove_outliers(c[2].breakpoint[0])) 
-        POS_RIGHT = min(remove_outliers(c[2].breakpoint[1])) 
-        
-        LR_DIST = POS_RIGHT - POS_LEFT
-        
-        if require_tsd and (LR_DIST > 0) or (LR_DIST < -args.max_tsd_len):
-                continue
+        support_5 = len(cluster_d['5'][five_cl_nr].reads)
+        support_3 = len(cluster_d['3'][three_cl_nr].reads)
 
-        POS = POS_LEFT  
-        
-        
-        # Mean mapq per read
-        sum_anchor_mapqs = sum([te_hits['anchor_mapqs'][k] for k in te_hits['anchor_mapqs']])
-        MEAN_MAPQ = int(sum_anchor_mapqs / (SUPPORT_LEFT + SUPPORT_RIGHT))
+        # TSD
+        tsd_len = ins[4]
+        tsd = cluster_d['5'][five_cl_nr].consensus.seq[-tsd_len:]
 
+        # Anchor ID, mapq and cigar
+        anchor5_id = ins[0]
+        anchor3_id = ins[2]
+        mapq_5 = cluster_d['5'][five_cl_nr].ref_mapq
+        cigar_5 = cluster_d['5'][five_cl_nr].ref_cigar
+        mapq_3 = cluster_d['3'][three_cl_nr].ref_mapq
+        cigar_3 = cluster_d['3'][three_cl_nr].ref_cigar
 
-        # At least some anchors should have a mapq > 0
-        if mapq_filt and sum_anchor_mapqs == 0:
-                continue
+        outline = [chrom, str(position), strand, str(tsd), str(support_5), str(support_3),anchor5_id, anchor3_id]
         
-        
-        # Target site duplication
-        region = [CHROM, POS_RIGHT + 1, POS_LEFT]
-        TSD = consensus_from_bam(region, f'{outpath}/reads_vs_ref.bam')
-        
-        
-        # Write output
-        outline = [
-            CHROM, POS, STRAND, 
-            SUPPORT_LEFT, SUPPORT_RIGHT, MEAN_MAPQ,
-            TSD, POS_LEFT, POS_RIGHT 
-            #TE_START, TE_END
-            ]
-        
-        # Add gene information
         if args.annot:
-            gene_info = gene_overlap(POS, annot, chrom_length)
-            try:
-                outline += gene_info
-            except TypeError:
-                print(POS)
+            gene, dists_to_gene = gene_overlap(position, annot, chrom_length)
+            outline += [gene, dists_to_gene]
+            
+        if args.detailed:
+            outline += [str(mapq_5), str(mapq_3), cigar_5, cigar_3]
 
         outline = map(str, outline)
 
-        if args.outfile:
-            outhandle.write('\t'.join(outline) + '\n')
+        outhandle.write('\t'.join(outline) + '\n')
         
-        else:
-            sys.stdout.write('\t'.join(outline) + '\n')
-    
-    if args.outfile:    
-        outhandle.close()
+    outhandle.close()
         
     
 def remove_outliers(lista):
@@ -330,8 +320,6 @@ def consensus_from_bam(region, bamfile, min_mapq=1, min_baseq=1):
         Consensus sequence of the region.
 
     """
-
-
     pybam = pysam.AlignmentFile(bamfile, "rb")
 
     chrmsm, strt, end = region[0], region[1]-1, region[2]

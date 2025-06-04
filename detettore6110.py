@@ -1,87 +1,109 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-
 import argparse
 import atexit
 import os
+import shutil
 import tempfile
 
-from lib import io
-from lib import copynumbers
-from lib import insertionsites
 from lib import readparsing
+from lib import clusters
 
 
 def get_args():
 
     parser = argparse.ArgumentParser(
-        description='A tool to infer IS copy numbers and insertion sites \
-        from short-read sequencing data. Default values in [].')
+        prog = 'dettetore6110.py',
+        formatter_class = argparse.ArgumentDefaultsHelpFormatter,
+        
+        description="""
+        Infer insertion sequence polymorphisms and copy numbers \
+        from short-read sequencing data.\n""",
+        
+        epilog="""
+        Example usage:
+        
+        detettore6110.py testing/some_reads.fastq.gz \
+            -t resources/is_targets/IS6110.fasta \
+            -o testing/results \
+            -p some_reads
+            
+        With reference genome and annotation:
+        
+        detettore6110.py testing/some_reads.fastq.gz \
+            -t resources/is_targets/IS6110.fasta \
+            -r resources/reference/MTBC0_v1.1.fasta \
+            -a resources/reference/MTBC0v1.1_PGAP_annot.gff \
+            -o testing/results \
+            -p some_reads
+        
+        """
+        )
 
-    parser_input = parser.add_argument_group('INPUT / OUTPUT')
-    parser_settings = parser.add_argument_group('PROGRAM SETTINGS')
-    
+    parser_input = parser.add_argument_group('Input/Output')
+    parser_settings = parser.add_argument_group('Parameters')
     path_to_detettore = os.path.dirname(__file__)
     
-    # INPUT/OUTPUT
+    # Input/Output
     parser_input.add_argument(
-        'reads', nargs='+',
+        'reads', nargs='+', 
         help='Short reads in fasta/fastq/bam. One file for SE, two files separated by space for PE.')
 
     parser_input.add_argument(
-        "-r", dest="ref",
-        default=os.path.join(path_to_detettore, 'resources/reference/MTBC0_v1.1.fasta'),
-        help='Reference genome in fasta format. [resources/reference/MTBC0_v1.1.fasta]')
-
-    parser_input.add_argument(
-        '-t', dest="target",
-        default=os.path.join(path_to_detettore, 'resources/is_targets/IS6110.fasta'),
-        help='IS consensus sequence in fasta format. [resources/is_targets/IS6110.fasta]')
+        '-t', dest="target", required=True,
+        help='IS consensus sequence in fasta format.')
     
+    parser_input.add_argument(
+        '-o', dest='outpath',
+        help='Path to output directory.')
+    
+    parser_input.add_argument(
+        '-p', dest='prefix',
+        help='Prefix for output files.')
+    
+    parser_input.add_argument(
+        "-r", dest="reference",
+        help='Reference genome in fasta format.')
+
     parser_input.add_argument(
         "-a", dest="annot",
-        default=os.path.join(path_to_detettore, 'resources/reference/MTBC0v1.1_PGAP_annot.gff'),
-        help='Gene annotation in gff format. [resources/reference/MTBC0v1.1_PGAP_annot.gff]')
+        help='Gene annotation in gff format.')
     
-    # OTHER SETTINGS
-    parser_input.add_argument(
-        '-o', dest='outfile',
-        help='Write output to this file instead of stdout.')
-    
+    # Parameters
     parser_settings.add_argument(
-        '-m', dest="mapq",
-        type=int, default=0,
-        help='Minimum mapping quality of reference-aligned reads. [0]')
-    
-    parser_settings.add_argument(
-        '-l', dest='min_split_len',
-        type=int, default=15,
-        help='Minimum alignment length for splitread target hits. [10]')
-    
-    parser_settings.add_argument(
-        '-d', dest='max_tsd_len',
-        type=int, default=10,
-        help='Maximum distance between left and right splitread cluster. [10]')
+        '-al', dest='min_anchor_len',
+        type=int, default=20,
+        help='Minimum length of the read part that maps outside the IS.')
 
     parser_settings.add_argument(
-        '-cl', dest="min_cl_len",
-        type=int, default=10,
-        help='Minimum number of anchor reads that have to cluster in order \
-            to be counted in the copy number estimation [10]')
-            
+        '-hl', dest='min_hit_len',
+        type=int, default=20,
+        help='Minimum length of the read part that maps to the IS.')
+    
     parser_settings.add_argument(
-        '-id', dest="min_perc_id",
-        type=int, default=95,
-        help='Minimum percentage identity for reads mapping against IS. [95]')
-            
+        '-cs', dest='min_cluster_size',
+        type=int, default=3,
+        help='Minimum number of anchor reads in a cluster.')
+    
     parser_settings.add_argument(
-            '-c', dest='cpus',
-            type= int, default=4,
-            help='Number of CPUs. [4]')
-
+        '-k', dest='seed_len',
+        type=int, default=20,
+        help='Require k exact matches next to the breakpoint for anchor reads to cluster.')
+    
     parser_settings.add_argument(
-        '--keep', dest='pref', type=str, default=False,
+        '-tsd', dest='tsd_len',
+        nargs='+', type=int, default=[3,4],
+        help='Alowable length of the target site duplication.')
+    
+    # Other settings
+    parser_settings.add_argument(
+        '-c', dest='cpus',
+        type= int, default=4,
+        help='Number of CPUs.')
+    
+    parser_settings.add_argument(
+        '--keep', action = 'store_true',
         help='Keep intermediate files in folder <pref>_tmp.')
 
     args=parser.parse_args()
@@ -89,82 +111,53 @@ def get_args():
     return args
 
 
-def main():
+def exit_handler(args, temp_dir):
+    """ Cleanup after program finish. If --keep is given, copy contents of 
+    temporary directory to working directory before deleting it"""
+    
+    if args.keep:  # Copy contents of temporary to output directory
+        dest = os.path.join(args.outpath, args.prefix + '_intermediate_files')
+        if os.path.exists(dest):
+            shutil.rmtree(dest)
+        shutil.copytree(temp_dir, dest )
+    shutil.rmtree(temp_dir)
 
+
+def main():
+    
     args = get_args()
     
-    # Mise en place ###########################################################
-    
-    working_dir = os.getcwd()    
+    # Le mise-en-place ######################################################
     temp_dir = tempfile.mkdtemp()
-    atexit.register(io.exit_handler, args, temp_dir, working_dir)
-    
-    reads = [os.path.abspath(x) for x in args.reads]
+    atexit.register(exit_handler, args, temp_dir)
     target = os.path.abspath(args.target)
-    reference = os.path.abspath(args.ref)
+    reads = readparsing.Reads(args, temp_dir)
     
-    # Convert input bam/cram to fastq
-    read_suffix = set([x.split('.')[-1] for x in reads]).pop()
+    if not os.path.exists(args.outpath):
+        os.mkdir(args.outpath)
     
-    if len(reads) == 1 and read_suffix in ['bam', 'cram', 'sam']:
+    # Map reads against IS target ###########################################
+    readparsing.mapreads(reads.fastq, target, 'reads_vs_IS', temp_dir, 'paf', args.cpus, k=9, m=10)  # Map reads against target IS
+    reads.parse_paf(f'{temp_dir}/reads_vs_IS.paf', args.min_anchor_len, args.min_hit_len)  # Extract reads that reach into the IS
+    reads.add_seqs_to_read_dict(reads.fastq, temp_dir)  # Re-traverse reads and extract the anchor sequences
 
-        bamfile = reads[0]        
-        reads = [readparsing.bam_to_fastq(bamfile, f'{temp_dir}/reads.fastq.gz')]
-        
+    # Identify anchor clusters ##############################################
+    anchor_clusters = clusters.Clusters(args, temp_dir)
+    anchor_clusters.cluster_anchors(reads, args.seed_len)  # Cluster anchor sequences based on exact identity of anchor part adjoining IS
+    anchor_clusters.parse_clusters(reads)  # Align reads and get anchor consensus sequences
+
+    # Identify reference positions ##########################################
+    if args.reference:
+        readparsing.mapreads([f'{temp_dir}/anchor_consensi.fasta'], args.reference, 'anchors_vs_ref', temp_dir, 'bam', args.cpus, k=9, m=10)  # Map anchors against reference
+        readparsing.mapreads(reads.fastq, args.reference, 'reads_vs_ref', temp_dir, 'bam', args.cpus)  # Map all reads against reference
+
+        anchor_clusters.add_ref_coordinates_to_clusters(f'{temp_dir}/anchors_vs_ref.bam')
+        overlaps = clusters.find_overlaps(f'{temp_dir}/anchors_vs_ref.bam', args.tsd_len)
     
-    # Get reads mapping against IS6110 ########################################
-    
-    # Map reads against IS6110
-    readparsing.mapreads(
-        reads, target, 'reads_vs_IS', temp_dir, 'paf', args.cpus, k=9, m=10)
-
-    # Extract partially mapping reads    
-    partially_mapping = readparsing.get_partially_mapping(f'{temp_dir}/reads_vs_IS.paf')
-    
-    # Write to fastq
-    readparsing.subset_fastq(partially_mapping, reads, temp_dir)
-    anchors = readparsing.write_anchor_sequences(f"{temp_dir}/partially_mapping.fastq.gz", partially_mapping, temp_dir)
-
-    # Estimate copy number from clustered anchor reads ########################
-    anchor_clusters = copynumbers.cluster_anchors(
-        [f'{temp_dir}/anchors.5.fasta', f'{temp_dir}/anchors.3.fasta'], anchors, temp_dir)
-    
-    copy_number = copynumbers.get_copy_number(
-        anchor_clusters,  min_cluster_size = args.min_cl_len)
-    
-    
-    # Find insertion sites in the reference genome ############################
-    
-    # Map partially mapping reads against reference
-    readparsing.mapreads(
-        [f'{temp_dir}/partially_mapping.fastq.gz'], reference, 
-        'reads_vs_ref', temp_dir, 'bam', args.cpus, k=9, m=10)
-
-    # Get split reads from reference alignment
-    splitreads = readparsing.getsplitreads(
-        f'{temp_dir}/reads_vs_ref.bam', temp_dir, args.min_split_len, args.mapq)
-
-
-    # Map split parts against IS consensus sequences
-    readparsing.mapreads(
-        [f'{temp_dir}/softclipped.fasta'], target, 'softclipped_vs_IS', 
-        temp_dir, 'paf', args.cpus, k=9, m=10)
-    
-    hits = insertionsites.parse_paf(f'{temp_dir}/softclipped_vs_IS.paf', args.min_split_len)
-
-
-    # Detect clusters of split reads ##########################################
-
-    # Cluster splitreads
-    split_positions = insertionsites.cluster_splitreads(splitreads, hits)
-
-    # Merge split clusters
-    clusters = insertionsites.merge_clusters(split_positions, hits)
-
-
-    # Write output & clean up #################################################
-    io.write_output(args, clusters, copy_number, temp_dir)
+    # Write output ##########################################################
+    anchor_clusters.write_cluster_output(args)
+    if args.reference:
+        anchor_clusters.write_reference_output(overlaps, f'{temp_dir}/reads_vs_ref.bam', args)
     
 if __name__ == '__main__':
     main()
-

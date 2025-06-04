@@ -4,7 +4,11 @@ lib/__pycache__
 to_do.md
 .gitignore
 testing/.ipynb_checkpoints/testing-checkpoint.ipynb
+test/reads.orygis*
 testing/some_reads.bam
 testing/some_reads.bam.bai
+testing/clustering
 tmp*
 .vscode
+exploration/
+debugging/
