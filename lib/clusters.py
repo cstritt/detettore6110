@@ -619,7 +619,7 @@ def lm(target, features):
 
     
 
-def find_overlaps(ref_aligned_anchors, tsd_len):
+def find_overlaps(ref_aligned_anchors, tsd_len, return_read_d=False):
     
     """
     Find overlapping reads in a given sorted BAM file.
@@ -638,12 +638,17 @@ def find_overlaps(ref_aligned_anchors, tsd_len):
         and the length of the overlap.
     """
     pybam = pysam.AlignmentFile(ref_aligned_anchors, "rb")
+    read_d = {}
     read_ids = []
     coordinates = []
 
     for read in pybam.fetch():
         read_ids.append(read.query_name)
         coordinates.append((read.reference_start, read.reference_end))
+        
+        if return_read_d:
+            read_d[read.query_name] = read
+        
     pybam.close()
 
     overlaps = []
@@ -656,8 +661,11 @@ def find_overlaps(ref_aligned_anchors, tsd_len):
                 if read_ids[i][0] == read_ids[j][0]:  # make sure reads reach into opposite ends of the IS
                     continue
                 overlaps.append((read_ids[i], end1, read_ids[j], start2, overlap))
-                
-    return overlaps
+    
+    if return_read_d:
+        return overlaps, read_d
+    else:
+        return overlaps
            
 
 def gene_overlap(position, annotation, chromosome_length):

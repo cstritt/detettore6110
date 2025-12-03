@@ -306,6 +306,7 @@ def mapreads(fastq, ref, outpref, outpath, outfmt, cpus=1, k=15, m=40):
         return 'Error: specify output format'
 
     minimap_cmd += fastq
+    print(' '.join(minimap_cmd))
 
     if outfmt == 'bam':  # Get sorted and indexed bam file
 
