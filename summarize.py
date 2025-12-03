@@ -48,8 +48,8 @@ def get_args():
 def main():
     
     #%% Load arguments
-    argumenti = ARGS()
-    #argumenti = get_args()
+    #argumenti = ARGS()
+    argumenti = get_args()
     
     include = []
     if argumenti.samples:
@@ -61,8 +61,8 @@ def main():
     reference_insertions = summaries.ReferenceInsertions()
 
     # Get unique anchors and reference insertions
-    #anchors.process_anchors(20, 4, argumenti, include, min_num_reads=5, min_z_score=-2)
-    anchors.process_anchors(20, 4, argumenti, include, min_num_reads=5, min_z_score=-2, subsample=100)
+    anchors.process_anchors(20, 4, argumenti, include, min_num_reads=5, min_z_score=-2)
+    #anchors.process_anchors(20, 4, argumenti, include, min_num_reads=5, min_z_score=-2, subsample=100)
     reference_insertions.create_insertion_dict(argumenti, include)
     
     #%% Cluster unique anchors to check if there is any redundancy
