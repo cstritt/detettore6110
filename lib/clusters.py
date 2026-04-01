@@ -720,9 +720,9 @@ def gene_overlap(position, annotation, chromosome_length):
     
     
     regex_patterns = [
-        r";gene=([^;\n]+)", 
         r"locus_tag=([^;\n]+)", 
-        r"mobile_element_type=([^;\n]+)"
+        r"mobile_element_type=([^;\n]+)",
+        r";gene=([^;\n]+)"
         ]
     
     # Find the closest intervals on either side of each position
