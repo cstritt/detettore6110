@@ -61,6 +61,7 @@ dependencies:
   - pandas=2.2.3=py312hf9745cd_1
   - pip=24.3.1=pyh8b19718_2
   - pysam=0.22.1=py312h47d5410_3
+  - pytest
   - python=3.12.8=h9e4cc4f_1_cpython
   - python-dateutil=2.9.0.post0=pyhff2d567_1
   - python-tzdata=2024.2=pyhd8ed1ab_1
@@ -80,4 +81,3 @@ dependencies:
   - wheel=0.45.1=pyhd8ed1ab_1
   - zlib=1.3.1=hb9d3cd8_2
   - zstd=1.5.6=ha6fb4c9_0
-prefix: /scicore/home/gagneux/stritt0001/miniconda3/envs/detettore6110

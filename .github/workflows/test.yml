@@ -1,0 +1,28 @@
+name: Test detettore6110
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Miniconda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          auto-update-conda: true
+          activate-environment: detettore6110
+          environment-file: environment/environment.yaml
+          python-version: "3.12"
+          use-mamba: true
+
+      - name: Run test suite
+        shell: bash -el {0}
+        run: |
+          conda run -n detettore6110 python -m pytest -q testing/test_detettore.py

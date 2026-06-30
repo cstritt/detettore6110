@@ -1,13 +1,39 @@
-.spyproject
+# Python cache and bytecode
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
 lib/__pycache__
-*_tmp/
+
+# Test and coverage artifacts
+.pytest_cache/
+.hypothesis/
+.coverage
+htmlcov/
+
+# Local environments
+.venv/
+venv/
+env/
+.conda/
+
+# Packaging/build output
+*.egg-info/
+build/
+dist/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+*.swp
+
+# Local files/folders
 to_do.md
-.gitignore
-testing/.ipynb_checkpoints/testing-checkpoint.ipynb
+testing/.ipynb_checkpoints/
 test/reads.orygis*
-testing/some_reads.bam
-testing/some_reads.bam.bai
-testing/clustering
 tmp*
 .vscode
 exploration/
