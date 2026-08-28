@@ -1,6 +1,5 @@
 import os
 import subprocess
-import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -14,12 +13,11 @@ class TestDetettore6110(unittest.TestCase):
         self.reference = self.repo_root / "resources" / "reference" / "MTBC0_v1.1.fasta"
         self.annotation = self.repo_root / "resources" / "reference" / "MTBC0v1.1_PGAP_annot.gff"
         self.prefix = "some_reads"
-        self.script = self.repo_root / "detettore6110.py"
 
     def _run_detettore(self, temp_dir, extra_args):
         command = [
-            sys.executable,
-            str(self.script),
+            "detettore6110",
+            "find",
             str(self.reads),
             "-t",
             str(self.targets),

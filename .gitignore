@@ -11,6 +11,9 @@ lib/__pycache__
 .coverage
 htmlcov/
 
+# Local development
+dev/
+
 # Local environments
 .venv/
 venv/

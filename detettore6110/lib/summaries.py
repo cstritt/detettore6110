@@ -1,4 +1,4 @@
-# !/usr/bin/env python
+#!/usr/bin/env python
 
 """ Create summaries of detettore results:
     - table with all insertions
@@ -11,10 +11,7 @@
 To do:
     - apply coverage filter to anchors: remove outliers
     - use cd-hit to identify spurious unique anchors due to indels in the seed
-    - 
-    
 """
-#%%
 import numpy as np
 import os
 import pandas
