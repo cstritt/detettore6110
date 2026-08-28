@@ -7,8 +7,8 @@ import os
 import shutil
 import tempfile
 
-from lib import readparsing
-from lib import clusters
+from detettore6110.lib import readparsing
+from detettore6110.lib import clusters
 
 
 def get_args():

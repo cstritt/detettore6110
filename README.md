@@ -12,40 +12,58 @@ Polymorphisms are characterized by the sequence of the region flanking an insert
 
 
 # Install
-Clone the repository
-```{bash}
-git clone https://github.com/cstritt/detettore6110
+
+## Via conda (recommended)
+```bash
+conda install -c bioconda detettore6110
 ```
 
-Create a conda environment with the required Python packages.
+## From source
+Clone the repository and install in development mode:
 
-```{bash}
+```bash
+git clone https://github.com/cstritt/detettore6110
 cd detettore6110
+pip install -e .
+```
 
+Or create a conda environment with the required Python packages:
+
+```bash
 conda env create -f environment.yaml -n detettore6110
+conda activate detettore6110
+pip install -e .
 ```
 
 # Run 
 The only required input are reads in fastq format. For the reference genome and the IS target (IS6110) the defaults in the resources folder are used if not stated otherwise. 
 
-Below is the simplest way to run detettore, using IS6110 as a target and the imputed ancestor MTBC0 ([Harrison et al. 2024](https://doi.org/10.1099%2Fmgen.0.001165)) as a reference. Writes to stdout if no output file path (-o) is provided.
+Below is the simplest way to run detettore, using IS6110 as a target and the imputed ancestor MTBC0 ([Harrison et al. 2024](https://doi.org/10.1099%2Fmgen.0.001165)) as a reference.
 
 ## Reference-free
-```{bash}
-detettore6110.py testing/some_reads.fastq.gz \  # reads in fastq or bam/cram
-  -t resources/is_targets/IS6110.fasta \  # IS target sequence 
-  -o  # path to output directory
-  -p  # output prefix
+```bash
+detettore6110 find testing/some_reads.fastq.gz \
+  -t resources/is_targets/IS6110.fasta \
+  -o output_dir \
+  -p sample_name
 ```
 
 ## With reference
-```{bash}
-detettore6110.py testing/some_reads.fastq.gz \  # reads in fastq or bam/cram
-  -t resources/is_targets/IS6110.fasta \  # IS target sequence 
-  -r resources/reference/MTBC0_v1.1.fasta  # reference genome
-  -a resources/reference/MTBC0v1.1_PGAP_annot.gff  # reference gene annotation in gff
-  -o  # path to output directory
-  -p  # output prefix
+```bash
+detettore6110 find testing/some_reads.fastq.gz \
+  -t resources/is_targets/IS6110.fasta \
+  -r resources/reference/MTBC0_v1.1.fasta \
+  -a resources/reference/MTBC0v1.1_PGAP_annot.gff \
+  -o output_dir \
+  -p sample_name
+```
+
+## Summarize results
+```bash
+detettore6110 summarize \
+  -i path_to_detettore_results \
+  -o output_dir \
+  -r resources/reference/MTBC0_v1.1.fasta
 ```
 
 # Output

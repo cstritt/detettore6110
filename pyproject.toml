@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "detettore6110"
+version = "0.1.0"
+description = "Detect and characterize insertion sequence polymorphisms and copy numbers in bacterial genomes without using a reference genome"
+readme = "README.md"
+license = {text = "GPL-3.0"}
+authors = [
+    {name = "Cristobal Strittmatter"}
+]
+maintainers = [
+    {name = "Cristobal Strittmatter"}
+]
+keywords = ["bioinformatics", "insertion sequences", "IS6110", "Mycobacterium tuberculosis", "genomics"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "biopython>=1.84",
+    "pysam>=0.22.0",
+    "pandas>=2.0.0",
+    "scikit-learn>=1.0.0",
+    "numpy>=1.20.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+]
+
+[project.scripts]
+detettore6110 = "detettore6110.entry_point:main"
+detettore6110-find = "detettore6110.find:main"
+
+[project.urls]
+Homepage = "https://github.com/cstritt/detettore6110"
+Repository = "https://github.com/cstritt/detettore6110"
+Issues = "https://github.com/cstritt/detettore6110/issues"
+
+[tool.setuptools]
+packages = ["detettore6110", "detettore6110.lib"]
+
+[tool.setuptools.package-data]
+detettore6110 = ["resources/*/*", "resources/*/*/*"]

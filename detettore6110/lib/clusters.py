@@ -15,7 +15,6 @@ from Bio import AlignIO
 from Bio.Align import AlignInfo
 from collections import Counter
 from sklearn.linear_model import LinearRegression
-from collections import Counter
 
 
 class AnchorCluster:
@@ -26,7 +25,7 @@ class AnchorCluster:
 
         Parameters
         ----------
-        cluster_nr : intipython
+        cluster_nr : int
         """
 
         self.cluster_nr = cluster_nr
